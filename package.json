@@ -1,8 +1,8 @@
 {
-  "name": "retrocognite",
+  "name": "retrospector",
   "version": "0.1.0",
   "bin": {
-    "retrocognite": "bin/retrocognite.js"
+    "retrospector": "bin/retrospector.js"
   },
   "scripts": {
     "build": "tsc",

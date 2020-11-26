@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
-import { RetrocogniteStack } from '../lib/retrocognite-stack';
+import { RetrospectorStack } from '../lib/retrospector-stack';
 
 const app = new cdk.App();
-new RetrocogniteStack(app, 'RetrocogniteStack');
+new RetrospectorStack(app, 'RetrospectorStack');
