@@ -38,8 +38,8 @@ type DynamoRepository struct {
 }
 
 const (
-	dynamoHashKey    = "pk"
-	dynamoRangeKey   = "sk"
+	dynamoHashKey = "pk"
+	// dynamoRangeKey   = "sk" // nolint
 	entityTimeToLive = time.Hour * 24 * 30
 	iocTimeToLive    = time.Hour * 24 * 30
 )

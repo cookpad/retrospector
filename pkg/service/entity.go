@@ -174,8 +174,6 @@ func (x *EntityService) NewWriteQueue(region, bucket, key string) *WriteQueue {
 			wq.err = errors.Wrap(err, "Failed to put object").With("input", input)
 			return
 		}
-
-		return
 	}()
 
 	return wq

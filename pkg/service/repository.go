@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/m-mizutani/retrospector"
 	"github.com/m-mizutani/retrospector/pkg/adaptor"
+	"github.com/m-mizutani/retrospector/pkg/errors"
 )
 
 type RepositoryService struct {
@@ -24,7 +25,18 @@ func (x *RepositoryService) GetEntities(iocSet []*retrospector.IOC) ([]*retrospe
 }
 
 func (x *RepositoryService) PutIOCSet(iocSet []*retrospector.IOC) error {
-	return x.repo.PutIOCSet(iocSet)
+	step := 10
+	for i := 0; i < len(iocSet); i += step {
+		ep := i + step
+		if len(iocSet) < ep {
+			ep = len(iocSet)
+		}
+		target := iocSet[i:ep]
+		if err := x.repo.PutIOCSet(target); err != nil {
+			return errors.With(err, "i", i)
+		}
+	}
+	return nil
 }
 
 func (x *RepositoryService) GetIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error) {
