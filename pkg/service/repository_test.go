@@ -47,7 +47,7 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 					Data: v1,
 					Type: retrospector.ValueDomainName,
 				},
-				Label:      "blue",
+				Source:     "blue",
 				RecordedAt: now.Unix(),
 			},
 			{
@@ -55,7 +55,7 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 					Data: v1,
 					Type: retrospector.ValueIPAddr,
 				},
-				Label:      "blue_ipaddr",
+				Source:     "blue_ipaddr",
 				RecordedAt: now.Add(time.Second).Unix(),
 			},
 			{
@@ -63,7 +63,7 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 					Data: v2,
 					Type: retrospector.ValueDomainName,
 				},
-				Label:      "orange1",
+				Source:     "orange1",
 				RecordedAt: now.Unix(),
 			},
 			{
@@ -71,7 +71,7 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 					Data: v2,
 					Type: retrospector.ValueDomainName,
 				},
-				Label:      "orange2",
+				Source:     "orange2",
 				RecordedAt: now.Add(time.Second).Unix(),
 			},
 		}
