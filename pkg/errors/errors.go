@@ -64,3 +64,12 @@ func Wrap(cause error, msg string) *Error {
 		return newError(errors.Wrap(cause, msg))
 	}
 }
+
+func Dump(err error) {
+	if e, ok := err.(*Error); ok {
+		fmt.Printf("%+v\n", e.cause)
+		for k, v := range e.Values {
+			fmt.Printf("%s: %v\n", k, v)
+		}
+	}
+}
