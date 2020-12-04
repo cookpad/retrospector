@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
 	"github.com/m-mizutani/retrospector/pkg/service"
 	"github.com/stretchr/testify/require"
 )
@@ -46,6 +45,5 @@ func TestAlertServiceSlackIntegration(t *testing.T) {
 		},
 	})
 
-	errors.Dump(err)
 	require.NoError(t, err)
 }
