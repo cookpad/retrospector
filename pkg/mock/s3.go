@@ -17,6 +17,15 @@ func init() {
 }
 
 type S3Client struct {
+	Region string
+}
+
+func NewS3Mock() (adaptor.S3ClientFactory, *S3Client) {
+	client := &S3Client{}
+	return func(region string) (adaptor.S3Client, error) {
+		client.Region = region
+		return client, nil
+	}, client
 }
 
 func NewS3Client(region string) (adaptor.S3Client, error) {

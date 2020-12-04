@@ -17,7 +17,18 @@ func NewRepositoryService(repo adaptor.Repository) *RepositoryService {
 }
 
 func (x *RepositoryService) PutEntities(entities []*retrospector.Entity) error {
-	return x.repo.PutEntities(entities)
+	step := 10
+	for i := 0; i < len(entities); i += step {
+		ep := i + step
+		if len(entities) < ep {
+			ep = len(entities)
+		}
+		target := entities[i:ep]
+		if err := x.repo.PutEntities(target); err != nil {
+			return errors.With(err, "i", i)
+		}
+	}
+	return nil
 }
 
 func (x *RepositoryService) GetEntities(iocSet []*retrospector.IOC) ([]*retrospector.Entity, error) {

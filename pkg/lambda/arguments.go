@@ -44,24 +44,8 @@ func newArguments(event interface{}) (*Arguments, error) {
 	return args, nil
 }
 
-func (x *Arguments) bindEnv() error {
-	if _, err := env.UnmarshalFromEnviron(x); err != nil {
-		return errors.Wrap(err, "Unmarshal environ vars")
-	}
-	return nil
-}
-
-// BindEvent convert event that Lambda Function received to v via json marshal/unmarshal
-func (x *Arguments) BindEvent(v interface{}) error {
-	raw, err := json.Marshal(x.Event)
-	if err != nil {
-		return errors.Wrap(err, "Marshal lambda event")
-	}
-	if err := json.Unmarshal(raw, v); err != nil {
-		return errors.Wrap(err, "Unmarshal lambda event")
-	}
-	return nil
-}
+// -----------------------
+// Services
 
 // RepositoryService returns *service.RepositoryService created from Arguments.Repository
 func (x *Arguments) RepositoryService() *service.RepositoryService {
@@ -83,6 +67,36 @@ func (x *Arguments) HTTPClient() adaptor.HTTPClient {
 		client = &http.Client{}
 	}
 	return client
+}
+
+func (x *Arguments) EntityService() *service.EntityService {
+	newS3 := x.NewS3
+	if newS3 == nil {
+		newS3 = adaptor.NewS3Client
+	}
+	return service.NewEntityService(newS3)
+}
+
+// -----------------------
+// Data binding
+
+func (x *Arguments) bindEnv() error {
+	if _, err := env.UnmarshalFromEnviron(x); err != nil {
+		return errors.Wrap(err, "Unmarshal environ vars")
+	}
+	return nil
+}
+
+// BindEvent convert event that Lambda Function received to v via json marshal/unmarshal
+func (x *Arguments) BindEvent(v interface{}) error {
+	raw, err := json.Marshal(x.Event)
+	if err != nil {
+		return errors.Wrap(err, "Marshal lambda event")
+	}
+	if err := json.Unmarshal(raw, v); err != nil {
+		return errors.Wrap(err, "Unmarshal lambda event")
+	}
+	return nil
 }
 
 // EventRecord is decapsulate event data (e.g. Body of SQS event)

@@ -5,7 +5,8 @@ import (
 	"github.com/m-mizutani/retrospector/pkg/lambda"
 )
 
-func handler(args *lambda.Arguments) error {
+//Handler is exporeted for test
+func Handler(args *lambda.Arguments) error {
 	events, err := args.DecapSNSoverSQSEvent()
 	if err != nil {
 		return err
@@ -28,5 +29,5 @@ func handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(handler)
+	lambda.Run(Handler)
 }
