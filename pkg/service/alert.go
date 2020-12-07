@@ -49,6 +49,9 @@ const (
 	AlertCauseIOC
 )
 
+// Up to 3 IOC/entity items in slack message
+const maxItemDisplaySlack = 3
+
 func (x *AlertService) EmitToSlack(alert *Alert) error {
 	if x.args.HTTPClient == nil {
 		return errors.New("HTTPClient is required in AlertServiceArguments to emit Slack, but not set")
@@ -73,7 +76,11 @@ func (x *AlertService) EmitToSlack(alert *Alert) error {
 	blocks = append(blocks, slack.NewSectionBlock(
 		slack.NewTextBlockObject("mrkdwn", "*Detected IOC*", false, false), nil, nil))
 
-	for _, ioc := range alert.IOCChunk {
+	for i, ioc := range alert.IOCChunk {
+		if i >= 3 {
+			break
+		}
+
 		blocks = append(blocks, slack.NewSectionBlock(
 			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*%s*", ioc.Source), false, false),
 			[]*slack.TextBlockObject{
@@ -88,7 +95,11 @@ func (x *AlertService) EmitToSlack(alert *Alert) error {
 	blocks = append(blocks, slack.NewSectionBlock(
 		slack.NewTextBlockObject("mrkdwn", "*Affected Entity*", false, false), nil, nil))
 
-	for _, entity := range alert.Entities {
+	for i, entity := range alert.Entities {
+		if i >= 3 {
+			break
+		}
+
 		blocks = append(blocks, slack.NewSectionBlock(
 			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*%s*", entity.Source), false, false),
 			[]*slack.TextBlockObject{
