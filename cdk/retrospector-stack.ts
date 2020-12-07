@@ -21,6 +21,10 @@ interface RetrospectorProps extends cdk.StackProps{
   readonly entityObjectTopicARN?: string;
   readonly slackWebhookURL?: string;
   readonly dynamoCapacity?: number;
+  readonly entityLambdaConcurrency?: number;
+  readonly iocLambdaConcurrency?: number;
+  readonly sentryDSN?: string;
+  readonly sentryEnv?: string;
 };
 
 interface crawler {
@@ -104,6 +108,8 @@ export class RetrospectorStack extends cdk.Stack {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
       RECORD_TABLE_NAME: this.recordTable.tableName,
       SLACK_WEBHOOK_URL: props.slackWebhookURL || "",
+      SENTRY_DSN: props.sentryDSN || "",
+      SENTRY_ENVIRONMENT: props.sentryEnv || "",
     }
 
     // Setup crawlers
@@ -136,27 +142,27 @@ export class RetrospectorStack extends cdk.Stack {
       {
         funcName: 'iocRecord',
         source: this.iocRecordQueue,
-        concurrent: 1,
+        concurrent: props.iocLambdaConcurrency || 1,
       },
       {
         funcName: 'iocDetect',
         source: this.iocDetectQueue,
-        concurrent: 1,
+        concurrent: props.iocLambdaConcurrency || 1,
       },
       {
         funcName: 'entityRecord',
         source: this.entityRecordQueue,
-        concurrent: 10,
+        concurrent: props.entityLambdaConcurrency || 10,
       },
       {
         funcName: 'entityDetect',
         source: this.entityDetectQueue,
-        concurrent: 10,
+        concurrent: props.entityLambdaConcurrency || 10,
       },
     ];
 
     this.handlers = {};
-    console.log(    this.handlers );
+
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
         runtime: lambda.Runtime.GO_1_X,

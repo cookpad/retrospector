@@ -79,7 +79,7 @@ func (x *AlertService) EmitToSlack(alert *Alert) error {
 			[]*slack.TextBlockObject{
 				newField("Reason", ioc.Reason),
 				newField("UpdatedAt", time.Unix(ioc.UpdatedAt, 0).Format("2006-01-02 15:04:05")),
-				newField("Description", ioc.Description),
+				newField("Description", strings.Replace(ioc.Description, ".", "[.]", -1)),
 			}, nil),
 		)
 	}

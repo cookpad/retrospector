@@ -11,7 +11,7 @@ import (
 var sentryEnabled = false
 
 func initSentry() {
-	if dsn, ok := os.LookupEnv("SENTRY_DSN"); ok {
+	if dsn := os.Getenv("SENTRY_DSN"); dsn != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn: dsn,
 		})
