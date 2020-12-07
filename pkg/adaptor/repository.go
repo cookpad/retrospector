@@ -69,7 +69,7 @@ func (x *DynamoRepository) PutEntities(entities []*retrospector.Entity) error {
 		ts := time.Unix(entity.RecordedAt, 0)
 		items = append(items, &entityItem{
 			dynamoItem: dynamoItem{
-				PK:        fmt.Sprintf("entity/%s/%s", entity.Type, entity.Value),
+				PK:        fmt.Sprintf("entity/%s/%s", entity.Type, entity.Value.Data),
 				SK:        ts.Format("20060102_150405"),
 				ExpiresAt: ts.Add(entityTimeToLive).Unix(),
 			},
@@ -90,7 +90,7 @@ func (x *DynamoRepository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospec
 	var entities []*retrospector.Entity
 
 	for _, ioc := range iocSet {
-		pk := fmt.Sprintf("entity/%s/%s", ioc.Type, ioc.Value)
+		pk := fmt.Sprintf("entity/%s/%s", ioc.Type, ioc.Value.Data)
 		var entityItems []*entityItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&entityItems); err != nil {
 			return nil, errors.Wrap(err, "Batch get entities").With("pk", pk).With("ioc", ioc)
@@ -110,7 +110,7 @@ func (x *DynamoRepository) PutIOCSet(iocSet []*retrospector.IOC) error {
 		ts := time.Unix(ioc.UpdatedAt, 0)
 		items = append(items, &iocItem{
 			dynamoItem: dynamoItem{
-				PK:        fmt.Sprintf("ioc/%s/%s", ioc.Type, ioc.Value),
+				PK:        fmt.Sprintf("ioc/%s/%s", ioc.Type, ioc.Value.Data),
 				SK:        ioc.Source,
 				ExpiresAt: ts.Add(iocTimeToLive).Unix(),
 			},
@@ -131,7 +131,7 @@ func (x *DynamoRepository) GetIOCSet(entities []*retrospector.Entity) ([]*retros
 
 	var iocSet []*retrospector.IOC
 	for _, entity := range entities {
-		pk := fmt.Sprintf("ioc/%s/%s", entity.Type, entity.Value)
+		pk := fmt.Sprintf("ioc/%s/%s", entity.Type, entity.Value.Data)
 
 		var iocItems []*iocItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&iocItems); err != nil {

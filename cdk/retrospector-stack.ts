@@ -54,7 +54,6 @@ export class RetrospectorStack extends cdk.Stack {
 
   constructor(scope: cdk.Construct, id: string, props?: RetrospectorProps) {
     super(scope, id, props);
-
     props = props || {};
 
     // DynamoDB
@@ -69,16 +68,16 @@ export class RetrospectorStack extends cdk.Stack {
 
     // SQS
     this.iocRecordQueue = new sqs.Queue(this, 'iocRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
+      visibilityTimeout: cdk.Duration.seconds(300),
     });
     this.iocDetectQueue = new sqs.Queue(this, 'iocDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
+      visibilityTimeout: cdk.Duration.seconds(300),
     });
     this.entityRecordQueue = new sqs.Queue(this, 'entityRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
+      visibilityTimeout: cdk.Duration.seconds(300),
     });
     this.entityDetectQueue = new sqs.Queue(this, 'entityDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
+      visibilityTimeout: cdk.Duration.seconds(300),
     });
 
     // SNS
@@ -109,7 +108,7 @@ export class RetrospectorStack extends cdk.Stack {
 
     // Setup crawlers
     const crawlers : Array<crawler> = [{
-      funcName: 'crawlURLHouse',
+      funcName: 'crawlURLHaus',
       interval: cdk.Duration.hours(24),
     }]
     crawlers.forEach(crawler => {
@@ -155,6 +154,9 @@ export class RetrospectorStack extends cdk.Stack {
         concurrent: 10,
       },
     ];
+
+    this.handlers = {};
+    console.log(    this.handlers );
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
         runtime: lambda.Runtime.GO_1_X,
@@ -169,7 +171,7 @@ export class RetrospectorStack extends cdk.Stack {
       });
       this.handlers[handler.funcName] = func;
 
-      if (lambdaRole == undefined) {
+      if (lambdaRole === undefined) {
         this.recordTable.grantReadWriteData(func);
       }
     })

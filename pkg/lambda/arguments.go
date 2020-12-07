@@ -19,12 +19,12 @@ type Arguments struct {
 	AwsRegion       string `env:"AWS_REGION"`
 
 	// Do not change them in each lambda Function. They must be accessed in only pkg/lambda
-	Repository adaptor.Repository
-	NewS3      adaptor.S3ClientFactory
-	NewSNS     adaptor.SNSClientFactory
-	HTTP       adaptor.HTTPClient
+	Repository adaptor.Repository       `env:"-"`
+	NewS3      adaptor.S3ClientFactory  `env:"-"`
+	NewSNS     adaptor.SNSClientFactory `env:"-"`
+	HTTP       adaptor.HTTPClient       `env:"-"`
 
-	Event interface{}
+	Event interface{} `env:"-"`
 }
 
 func newArguments(event interface{}) (*Arguments, error) {

@@ -26,7 +26,7 @@
     "@aws-cdk/aws-events-targets": "1.75.0",
     "@aws-cdk/aws-iam": "1.75.0",
     "@aws-cdk/aws-lambda": "1.75.0",
-    "@aws-cdk/aws-lambda-event-sources": "^1.75.0",
+    "@aws-cdk/aws-lambda-event-sources": "1.75.0",
     "@aws-cdk/aws-sns": "1.75.0",
     "@aws-cdk/aws-sns-subscriptions": "1.75.0",
     "@aws-cdk/aws-sqs": "1.75.0",

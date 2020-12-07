@@ -5,7 +5,10 @@ import (
 	"github.com/m-mizutani/retrospector"
 	"github.com/m-mizutani/retrospector/pkg/errors"
 	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/logging"
 )
+
+var logger = logging.Logger
 
 // Handler is exporeted for test
 func Handler(args *lambda.Arguments) error {
@@ -24,18 +27,27 @@ func Handler(args *lambda.Arguments) error {
 		}
 
 		for _, s3Record := range s3Event.Records {
+			logger.Info().Interface("s3record", s3Record).Msg("handle entity record")
+
 			rq := entitySvc.NewReadQueue(s3Record.AWSRegion, s3Record.S3.Bucket.Name, s3Record.S3.Object.Key)
-			var entities []*retrospector.Entity
+
+			// To avoid duplicated DynamoDB record
+			entityMap := make(map[retrospector.Value]*retrospector.Entity)
 			for {
 				entity := rq.Read()
-				if entity != nil {
+				if entity == nil {
 					break
 				}
-				entities = append(entities, entity)
+				entityMap[entity.Value] = entity
 			}
 
 			if err := rq.Error(); err != nil {
 				return errors.With(err, "s3", s3Record)
+			}
+
+			var entities []*retrospector.Entity
+			for _, entity := range entityMap {
+				entities = append(entities, entity)
 			}
 
 			if err := repoSvc.PutEntities(entities); err != nil {

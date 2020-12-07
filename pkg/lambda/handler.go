@@ -2,7 +2,6 @@ package lambda
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/m-mizutani/retrospector/pkg/errors"
@@ -16,6 +15,7 @@ type Handler func(args *Arguments) error
 func Run(handler Handler) {
 	lambda.Start(func(ctx context.Context, event interface{}) error {
 		defer errors.FlushSentry()
+		logging.Logger.Info().Interface("event", event).Msg("Lambda start")
 
 		args, err := newArguments(event)
 		if err != nil {
@@ -28,7 +28,7 @@ func Run(handler Handler) {
 			log := logging.Logger.Error()
 			if e, ok := err.(*errors.Error); ok {
 				for key, value := range e.Values {
-					log = log.Str(key, fmt.Sprintf("%v", value))
+					log = log.Interface(key, value)
 				}
 				log = log.Str("stacktrace", e.StackTrace())
 			}

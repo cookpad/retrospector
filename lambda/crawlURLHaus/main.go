@@ -39,7 +39,8 @@ func Handler(args *lambda.Arguments) error {
 	reader := csv.NewReader(resp.Body)
 	reader.Comment = []rune("#")[0]
 
-	var iocChunk retrospector.IOCChunk
+	iocMap := make(map[retrospector.Value]*retrospector.IOC)
+
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -62,22 +63,35 @@ func Handler(args *lambda.Arguments) error {
 			return errors.Wrap(err, "Fail to parse tiemstamp in URLhaus CSV")
 		}
 
-		iocChunk = append(iocChunk, &retrospector.IOC{
-			Value: retrospector.Value{
-				Data: url.Hostname(),
-				Type: retrospector.ValueDomainName,
-			},
-			Source:      "URLhaus",
-			UpdatedAt:   ts.Unix(),
-			Reason:      row[4],
-			Description: fmt.Sprintf("%s: %s", row[0], row[2]),
-		})
+		value := retrospector.Value{
+			Data: url.Hostname(),
+			Type: retrospector.ValueDomainName,
+		}
+
+		ioc, ok := iocMap[value]
+		if !ok {
+			ioc = &retrospector.IOC{
+				Value:       value,
+				Source:      "URLhaus",
+				UpdatedAt:   ts.Unix(),
+				Reason:      row[4],
+				Description: fmt.Sprintf("%s: %s", row[0], row[2]),
+			}
+			iocMap[value] = ioc
+		} else {
+			ioc.Description += fmt.Sprintf(", %s: %s", row[0], row[2])
+		}
+	}
+
+	var iocChunk retrospector.IOCChunk
+	for _, ioc := range iocMap {
+		iocChunk = append(iocChunk, ioc)
 
 		if len(iocChunk) >= chunkSizeLimit {
 			if err := snsSvc.Publish(args.IOCTopicARN, iocChunk); err != nil {
 				return errors.With(err, "ioc", iocChunk).With("topic", args.IOCTopicARN)
 			}
-			iocChunk = retrospector.IOCChunk{}
+			iocChunk = nil
 		}
 	}
 
