@@ -18,7 +18,8 @@ func TestMockS3(t *testing.T) {
 	require.NoError(t, err)
 	buf := &bytes.Buffer{}
 	wr := gzip.NewWriter(buf)
-	wr.Write([]byte("five"))
+	_, err = wr.Write([]byte("five"))
+	require.NoError(t, err)
 	require.NoError(t, wr.Close())
 
 	putInput := &s3.PutObjectInput{
