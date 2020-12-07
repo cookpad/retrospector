@@ -1,7 +1,7 @@
 CODE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 CWD := ${CURDIR}
 
-COMMON=$(CODE_DIR)/*.go $(CODE_DIR)/internal/*/*.go
+COMMON=$(CODE_DIR)/*.go $(CODE_DIR)/pkg/*/*.go
 
 FUNCTIONS = \
 	$(CODE_DIR)/build/iocRecord \

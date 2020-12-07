@@ -15,6 +15,7 @@ import (
 type Arguments struct {
 	IOCTopicARN     string `env:"IOC_TOPIC_ARN"`
 	RecordTableName string `env:"RECORD_TABLE_NAME"`
+	SlackWebhookURL string `env:"SLACK_WEBHOOK_URL"`
 	AwsRegion       string `env:"AWS_REGION"`
 
 	// Do not change them in each lambda Function. They must be accessed in only pkg/lambda
@@ -75,6 +76,14 @@ func (x *Arguments) EntityService() *service.EntityService {
 		newS3 = adaptor.NewS3Client
 	}
 	return service.NewEntityService(newS3)
+}
+
+func (x *Arguments) AlertService() *service.AlertService {
+	httpClient := x.HTTPClient()
+	return service.NewAlertService(&service.AlertServiceArguments{
+		HTTPClient:              httpClient,
+		SlackIncomingWebhookURL: x.SlackWebhookURL,
+	})
 }
 
 // -----------------------

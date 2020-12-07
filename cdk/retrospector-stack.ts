@@ -19,6 +19,8 @@ import { SqsSubscription } from "@aws-cdk/aws-sns-subscriptions";
 interface RetrospectorProps extends cdk.StackProps{
   readonly lambdaRoleARN?: string;
   readonly entityObjectTopicARN?: string;
+  readonly slackWebhookURL?: string;
+  readonly dynamoCapacity?: number;
 };
 
 interface crawler {
@@ -53,14 +55,16 @@ export class RetrospectorStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: RetrospectorProps) {
     super(scope, id, props);
 
-    props ||= {};
+    props = props || {};
 
     // DynamoDB
     this.recordTable = new dynamodb.Table(this, "recordTable", {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       timeToLiveAttribute: "expires_at",
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: props.dynamoCapacity || 100,
+      writeCapacity: props.dynamoCapacity || 100,
     });
 
     // SQS
@@ -100,6 +104,7 @@ export class RetrospectorStack extends cdk.Stack {
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
       RECORD_TABLE_NAME: this.recordTable.tableName,
+      SLACK_WEBHOOK_URL: props.slackWebhookURL || "",
     }
 
     // Setup crawlers
@@ -114,7 +119,7 @@ export class RetrospectorStack extends cdk.Stack {
         code: buildPath,
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
-        memorySize: 256,
+        memorySize: 1024,
         environment: baseEnvVars,
         reservedConcurrentExecutions: 1,
       });
