@@ -71,18 +71,21 @@ export class RetrospectorStack extends cdk.Stack {
     });
 
     // SQS
-    this.iocRecordQueue = new sqs.Queue(this, 'iocRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(300),
+    const queues : {[key: string]: sqs.Queue} = {};
+    ['iocRecord', 'iocDetect', 'entityRecord', 'entityDetect'].forEach(queueName => {
+      const dlq = new sqs.Queue(this, queueName + 'DLQ');
+      queues[queueName] = new sqs.Queue(this, queueName + 'Queue' ,{
+        visibilityTimeout: cdk.Duration.seconds(300),
+        deadLetterQueue: {
+          maxReceiveCount: 3,
+          queue: dlq,
+        }
+      });
     });
-    this.iocDetectQueue = new sqs.Queue(this, 'iocDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(300),
-    });
-    this.entityRecordQueue = new sqs.Queue(this, 'entityRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(300),
-    });
-    this.entityDetectQueue = new sqs.Queue(this, 'entityDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(300),
-    });
+    this.iocRecordQueue = queues['iocRecord'];
+    this.iocDetectQueue = queues['iocDetect'];
+    this.entityRecordQueue = queues['entityRecord'];
+    this.entityDetectQueue = queues['entityDetect'];
 
     // SNS
     this.iocTopic = new sns.Topic(this, "iocTopic", {});
