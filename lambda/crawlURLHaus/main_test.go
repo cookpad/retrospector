@@ -74,4 +74,5 @@ func TestCrawlURLHaus(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(*client.PublishInput[0].Message), &iocChunk))
 	require.Equal(t, 4, len(iocChunk))
 	assert.Contains(t, []string{"94.122.77.235", "61.52.236.225", "182.121.210.95", "83.224.148.25"}, iocChunk[0].Data)
+	assert.Equal(t, retrospector.ValueIPAddr, iocChunk[0].Type)
 }

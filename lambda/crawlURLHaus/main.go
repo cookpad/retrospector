@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,6 +18,10 @@ const (
 	urlhausURL     = "https://urlhaus.abuse.ch/downloads/csv_recent/"
 	chunkSizeLimit = 32
 )
+
+func isIPaddress(v string) bool {
+	return net.ParseIP(v) != nil
+}
 
 // Handler is main function and exposed for test
 func Handler(args *lambda.Arguments) error {
@@ -67,6 +72,9 @@ func Handler(args *lambda.Arguments) error {
 			Data: url.Hostname(),
 			Type: retrospector.ValueDomainName,
 		}
+		if isIPaddress(value.Data) {
+			value.Type = retrospector.ValueIPAddr
+		}
 
 		ioc, ok := iocMap[value]
 		if !ok {
@@ -78,7 +86,7 @@ func Handler(args *lambda.Arguments) error {
 				Description: fmt.Sprintf("%s: %s", row[0], row[2]),
 			}
 			iocMap[value] = ioc
-		} else {
+		} else if len(ioc.Description) < 1024 {
 			ioc.Description += fmt.Sprintf(", %s: %s", row[0], row[2])
 		}
 	}
