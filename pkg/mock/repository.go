@@ -24,8 +24,11 @@ func NewRepository() adaptor.Repository {
 func (x *Repository) PutEntities(entities []*retrospector.Entity) error {
 	for _, entity := range entities {
 		ts := time.Unix(entity.RecordedAt, 0)
+		sk := entity.Subject
+		if sk == "" {
+			sk = ts.Format("20060102_150405")
+		}
 		pk := fmt.Sprintf("entity/%s/%s", entity.Type, entity.Data)
-		sk := ts.Format("20060102_150405")
 
 		smap, ok := x.data[pk]
 		if !ok {

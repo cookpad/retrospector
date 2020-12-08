@@ -67,10 +67,16 @@ func (x *DynamoRepository) PutEntities(entities []*retrospector.Entity) error {
 	var items []interface{}
 	for _, entity := range entities {
 		ts := time.Unix(entity.RecordedAt, 0)
+		sk := entity.Subject
+		if sk == "" {
+			sk = ts.Format("20060102_150405")
+		}
+
 		items = append(items, &entityItem{
+
 			dynamoItem: dynamoItem{
 				PK:        fmt.Sprintf("entity/%s/%s", entity.Type, entity.Value.Data),
-				SK:        ts.Format("20060102_150405"),
+				SK:        sk,
 				ExpiresAt: ts.Add(entityTimeToLive).Unix(),
 			},
 			Entity: *entity,
