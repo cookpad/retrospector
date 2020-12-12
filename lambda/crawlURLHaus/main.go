@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 )
 
 const (
@@ -24,21 +24,21 @@ func isIPaddress(v string) bool {
 }
 
 // Handler is main function and exposed for test
-func Handler(args *lambda.Arguments) error {
+func Handler(args *arguments.Arguments, event golambda.Event) error {
 	snsSvc := args.SNSService()
 
 	req, err := http.NewRequest("GET", urlhausURL, nil)
 	if err != nil {
-		return errors.Wrap(err, "Fail to create new URLhaus HTTP request").With("url", urlhausURL)
+		return golambda.WrapError(err, "Fail to create new URLhaus HTTP request").With("url", urlhausURL)
 	}
 
 	client := args.HTTPClient()
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "Fail to send HTTP request").With("url", urlhausURL)
+		return golambda.WrapError(err, "Fail to send HTTP request").With("url", urlhausURL)
 	}
 	if resp.StatusCode != 200 {
-		return errors.Wrap(err, "Unexpected status code").With("code", resp.StatusCode).With("url", urlhausURL)
+		return golambda.WrapError(err, "Unexpected status code").With("code", resp.StatusCode).With("url", urlhausURL)
 	}
 
 	reader := csv.NewReader(resp.Body)
@@ -51,7 +51,7 @@ func Handler(args *lambda.Arguments) error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return errors.Wrap(err, "Fail to read CSV of URLhaus")
+			return golambda.WrapError(err, "Fail to read CSV of URLhaus")
 		}
 
 		if len(row) != 8 {
@@ -60,12 +60,12 @@ func Handler(args *lambda.Arguments) error {
 
 		url, err := url.Parse(row[2])
 		if err != nil {
-			return errors.Wrap(err, "Fail to parse URL in URLhaus CSV")
+			return golambda.WrapError(err, "Fail to parse URL in URLhaus CSV")
 		}
 
 		ts, err := time.Parse("2006-01-02 15:04:05", row[1])
 		if err != nil {
-			return errors.Wrap(err, "Fail to parse tiemstamp in URLhaus CSV")
+			return golambda.WrapError(err, "Fail to parse tiemstamp in URLhaus CSV")
 		}
 
 		value := retrospector.Value{
@@ -97,7 +97,7 @@ func Handler(args *lambda.Arguments) error {
 
 		if len(iocChunk) >= chunkSizeLimit {
 			if err := snsSvc.Publish(args.IOCTopicARN, iocChunk); err != nil {
-				return errors.With(err, "ioc", iocChunk).With("topic", args.IOCTopicARN)
+				return golambda.WrapError(err).With("ioc", iocChunk).With("topic", args.IOCTopicARN)
 			}
 			iocChunk = nil
 		}
@@ -105,7 +105,9 @@ func Handler(args *lambda.Arguments) error {
 
 	if len(iocChunk) > 0 {
 		if err := snsSvc.Publish(args.IOCTopicARN, iocChunk); err != nil {
-			return errors.With(err, "ioc", iocChunk).With("topic", args.IOCTopicARN)
+			return golambda.WrapError(err).
+				With("ioc", iocChunk).
+				With("topic", args.IOCTopicARN)
 		}
 	}
 
@@ -113,5 +115,7 @@ func Handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(Handler)
+	golambda.Start(func(event golambda.Event) error {
+		return Handler(arguments.New(), event)
+	})
 }

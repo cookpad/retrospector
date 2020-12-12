@@ -9,9 +9,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
 	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/errors"
 )
 
 type EntityService struct {
@@ -76,7 +76,7 @@ func (x *EntityService) NewReadQueue(region, bucket, key string) *ReadQueue {
 		output, err := s3Client.GetObject(input)
 		if err != nil {
 			queue <- &entityQueueMsg{
-				Error: errors.Wrap(err, "Failed GetObject").With("input", input),
+				Error: golambda.WrapError(err, "Failed GetObject").With("input", input),
 			}
 			return
 		}
@@ -87,7 +87,7 @@ func (x *EntityService) NewReadQueue(region, bucket, key string) *ReadQueue {
 			entity := &retrospector.Entity{}
 			if err := json.Unmarshal(buf, entity); err != nil {
 				queue <- &entityQueueMsg{
-					Error: errors.Wrap(err, "Failed json.Marshal for scanned data").With("buf", string(buf)),
+					Error: golambda.WrapError(err, "Failed json.Marshal for scanned data").With("buf", string(buf)),
 				}
 				return
 			}
@@ -138,7 +138,7 @@ func (x *EntityService) NewWriteQueue(region, bucket, key string) *WriteQueue {
 
 		s3Client, err := x.newS3(region)
 		if err != nil {
-			wq.err = errors.Wrap(err, "Failed to create S3Client").With("region", region)
+			wq.err = golambda.WrapError(err, "Failed to create S3Client").With("region", region)
 			return
 		}
 
@@ -149,17 +149,17 @@ func (x *EntityService) NewWriteQueue(region, bucket, key string) *WriteQueue {
 		for entity := range queue {
 			raw, err := json.Marshal(entity)
 			if err != nil {
-				wq.err = errors.Wrap(err, "Failed to marshal entity").With("entity", entity)
+				wq.err = golambda.WrapError(err, "Failed to marshal entity").With("entity", entity)
 				return
 			}
 
 			if _, err := gz.Write(append(raw, rc...)); err != nil {
-				wq.err = errors.Wrap(err, "Failed to write line of entity").With("raw", string(raw))
+				wq.err = golambda.WrapError(err, "Failed to write line of entity").With("raw", string(raw))
 				return
 			}
 		}
 		if err := gz.Close(); err != nil {
-			wq.err = errors.Wrap(err, "Failed to close gzip stream")
+			wq.err = golambda.WrapError(err, "Failed to close gzip stream")
 			return
 		}
 
@@ -171,7 +171,7 @@ func (x *EntityService) NewWriteQueue(region, bucket, key string) *WriteQueue {
 			ContentType:     aws.String("application/x-gzip"),
 		}
 		if _, err := s3Client.PutObject(input); err != nil {
-			wq.err = errors.Wrap(err, "Failed to put object").With("input", input)
+			wq.err = golambda.WrapError(err, "Failed to put object").With("input", input)
 			return
 		}
 	}()

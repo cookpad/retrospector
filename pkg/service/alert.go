@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
 	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/errors"
-
 	"github.com/slack-go/slack"
 )
 
@@ -54,10 +53,10 @@ const maxItemDisplaySlack = 3
 
 func (x *AlertService) EmitToSlack(alert *Alert) error {
 	if x.args.HTTPClient == nil {
-		return errors.New("HTTPClient is required in AlertServiceArguments to emit Slack, but not set")
+		return golambda.NewError("HTTPClient is required in AlertServiceArguments to emit Slack, but not set")
 	}
 	if x.args.SlackIncomingWebhookURL == "" {
-		return errors.New("SlackIncomingWebhookURL is required in AlertServiceArguments to emit Slack, but not set")
+		return golambda.NewError("SlackIncomingWebhookURL is required in AlertServiceArguments to emit Slack, but not set")
 	}
 
 	newField := func(title, value string) *slack.TextBlockObject {
@@ -96,7 +95,7 @@ func (x *AlertService) EmitToSlack(alert *Alert) error {
 		slack.NewTextBlockObject("mrkdwn", "*Affected Entity*", false, false), nil, nil))
 
 	for i, entity := range alert.Entities {
-		if i >= 3 {
+		if i >= maxItemDisplaySlack {
 			break
 		}
 
@@ -112,21 +111,21 @@ func (x *AlertService) EmitToSlack(alert *Alert) error {
 	msg := slack.NewBlockMessage(blocks...)
 	raw, err := json.Marshal(msg)
 	if err != nil {
-		return errors.Wrap(err, "Failed to unmarshal slack message").With("msg", msg)
+		return golambda.WrapError(err, "Failed to unmarshal slack message").With("msg", msg)
 	}
 
 	req, err := http.NewRequest("POST", x.args.SlackIncomingWebhookURL, bytes.NewBuffer(raw))
 	if err != nil {
-		return errors.Wrap(err, "Failed to create a new HTTP request to Slack")
+		return golambda.WrapError(err, "Failed to create a new HTTP request to Slack")
 	}
 
 	resp, err := x.args.HTTPClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "Failed to post message to slack in communication").With("msg", msg)
+		return golambda.WrapError(err, "Failed to post message to slack in communication").With("msg", msg)
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return errors.New("Failed to post message to slack in API").
+		return golambda.NewError("Failed to post message to slack in API").
 			With("msg", msg).With("code", resp.StatusCode).With("body", string(body))
 	}
 

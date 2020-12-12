@@ -1,15 +1,15 @@
 package main
 
 import (
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/service"
 )
 
 //Handler is exporeted for test
-func Handler(args *lambda.Arguments) error {
-	events, err := args.DecapSNSoverSQSEvent()
+func Handler(args *arguments.Arguments, event golambda.Event) error {
+	events, err := event.DecapSNSonSQSMessage()
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func Handler(args *lambda.Arguments) error {
 	for _, event := range events {
 		var iocChunk retrospector.IOCChunk
 		if err := event.Bind(&iocChunk); err != nil {
-			return errors.With(err, "event", event)
+			return golambda.WrapError(err).With("event", event)
 		}
 
 		for _, ioc := range iocChunk {
@@ -41,7 +41,7 @@ func Handler(args *lambda.Arguments) error {
 			}
 
 			if err := alertSvc.EmitToSlack(alert); err != nil {
-				return errors.With(err, "ioc", ioc).With("alert", alert)
+				return golambda.WrapError(err).With("ioc", ioc).With("alert", alert)
 			}
 		}
 	}
@@ -50,5 +50,7 @@ func Handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(Handler)
+	golambda.Start(func(event golambda.Event) error {
+		return Handler(arguments.New(), event)
+	})
 }

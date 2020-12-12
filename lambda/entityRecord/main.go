@@ -2,17 +2,17 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/logging"
 )
 
 var logger = logging.Logger
 
 // Handler is exporeted for test
-func Handler(args *lambda.Arguments) error {
-	recvEvents, err := args.DecapSNSoverSQSEvent()
+func Handler(args *arguments.Arguments, event golambda.Event) error {
+	recvEvents, err := event.DecapSNSonSQSMessage()
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func Handler(args *lambda.Arguments) error {
 			}
 
 			if err := rq.Error(); err != nil {
-				return errors.With(err, "s3", s3Record)
+				return golambda.WrapError(err).With("s3", s3Record)
 			}
 
 			var entities []*retrospector.Entity
@@ -51,7 +51,7 @@ func Handler(args *lambda.Arguments) error {
 			}
 
 			if err := repoSvc.PutEntities(entities); err != nil {
-				return errors.With(err, "s3", s3Record)
+				return golambda.WrapError(err).With("s3", s3Record)
 			}
 		}
 	}
@@ -60,5 +60,7 @@ func Handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(Handler)
+	golambda.Start(func(event golambda.Event) error {
+		return Handler(arguments.New(), event)
+	})
 }

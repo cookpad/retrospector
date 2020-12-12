@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -85,13 +86,12 @@ func TestIOCDetect(t *testing.T) {
 			},
 		}))
 
-		args := &lambda.Arguments{
+		args := &arguments.Arguments{
 			Repository:      repo,
-			Event:           sqsEvent,
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args))
+		require.NoError(t, main.Handler(args, golambda.Event{Origin: sqsEvent}))
 
 		require.Equal(t, 1, len(httpClient.Requests))
 		assert.Equal(t, "test.example.com", httpClient.Requests[0].URL.Host)
@@ -114,13 +114,13 @@ func TestIOCDetect(t *testing.T) {
 			},
 		}))
 
-		args := &lambda.Arguments{
+		args := &arguments.Arguments{
 			Repository:      repo,
-			Event:           sqsEvent,
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args))
+		event := golambda.Event{Origin: sqsEvent}
+		require.NoError(t, main.Handler(args, event))
 
 		require.Equal(t, 0, len(httpClient.Requests))
 	})
@@ -141,13 +141,13 @@ func TestIOCDetect(t *testing.T) {
 			},
 		}))
 
-		args := &lambda.Arguments{
+		event := golambda.Event{Origin: sqsEvent}
+		args := &arguments.Arguments{
 			Repository:      repo,
-			Event:           sqsEvent,
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args))
+		require.NoError(t, main.Handler(args, event))
 
 		require.Equal(t, 0, len(httpClient.Requests))
 	})

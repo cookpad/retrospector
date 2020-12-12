@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,12 +24,12 @@ func TestCrawlURLHausIntegration(t *testing.T) {
 	}
 
 	newSNS, client := mock.NewSNSMock()
-	args := &lambda.Arguments{
+	args := &arguments.Arguments{
 		IOCTopicARN: "arn:aws:sns:us-east-1:111122223333:my-topic",
 		NewSNS:      newSNS,
 	}
 
-	require.NoError(t, main.Handler(args))
+	require.NoError(t, main.Handler(args, golambda.Event{}))
 	assert.Greater(t, len(client.PublishInput), 1000)
 	assert.Equal(t, "us-east-1", client.Region)
 	assert.Equal(t, "arn:aws:sns:us-east-1:111122223333:my-topic", *client.PublishInput[0].TopicArn)
@@ -59,13 +60,13 @@ func TestCrawlURLHaus(t *testing.T) {
 		RespBody: ioutil.NopCloser(strings.NewReader(sampleData)),
 	}
 
-	args := &lambda.Arguments{
+	args := &arguments.Arguments{
 		IOCTopicARN: "arn:aws:sns:us-east-1:111122223333:my-topic",
 		NewSNS:      newSNS,
 		HTTP:        httpClient,
 	}
 
-	require.NoError(t, main.Handler(args))
+	require.NoError(t, main.Handler(args, golambda.Event{}))
 	require.Equal(t, 1, len(client.PublishInput))
 	assert.Equal(t, "us-east-1", client.Region)
 	assert.Equal(t, "arn:aws:sns:us-east-1:111122223333:my-topic", *client.PublishInput[0].TopicArn)

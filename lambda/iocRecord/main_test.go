@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,11 +94,13 @@ func TestIOCRecord(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, resp0)
 
-		args := &lambda.Arguments{
+		args := &arguments.Arguments{
 			Repository: repo,
-			Event:      sqsEvent,
 		}
-		require.NoError(t, main.Handler(args))
+		event := golambda.Event{
+			Origin: sqsEvent,
+		}
+		require.NoError(t, main.Handler(args, event))
 
 		resp, err := repo.GetIOCSet(keyEntities)
 		require.NoError(t, err)
@@ -130,11 +133,11 @@ func TestIOCRecord(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, resp0)
 
-		args := &lambda.Arguments{
+		args := &arguments.Arguments{
 			Repository: repo,
-			Event:      sqsEvent,
 		}
-		require.NoError(t, main.Handler(args))
+		event := golambda.Event{Origin: sqsEvent}
+		require.NoError(t, main.Handler(args, event))
 
 		resp, err := repo.GetIOCSet(keyEntities)
 		require.NoError(t, err)

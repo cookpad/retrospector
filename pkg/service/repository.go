@@ -1,9 +1,9 @@
 package service
 
 import (
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
 	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/errors"
 )
 
 type RepositoryService struct {
@@ -25,7 +25,7 @@ func (x *RepositoryService) PutEntities(entities []*retrospector.Entity) error {
 		}
 		target := entities[i:ep]
 		if err := x.repo.PutEntities(target); err != nil {
-			return errors.With(err, "i", i)
+			return golambda.WrapError(err).With("i", i)
 		}
 	}
 	return nil
@@ -44,7 +44,7 @@ func (x *RepositoryService) PutIOCSet(iocSet []*retrospector.IOC) error {
 		}
 		target := iocSet[i:ep]
 		if err := x.repo.PutIOCSet(target); err != nil {
-			return errors.With(err, "i", i)
+			return golambda.WrapError(err).With("i", i)
 		}
 	}
 	return nil

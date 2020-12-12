@@ -1,13 +1,14 @@
 package main
 
 import (
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 )
 
 //Handler is exporeted for test
-func Handler(args *lambda.Arguments) error {
-	events, err := args.DecapSNSoverSQSEvent()
+func Handler(args *arguments.Arguments, event golambda.Event) error {
+	events, err := event.DecapSNSonSQSMessage()
 	if err != nil {
 		return err
 	}
@@ -29,5 +30,8 @@ func Handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(Handler)
+	args := arguments.New()
+	golambda.Start(func(event golambda.Event) error {
+		return Handler(args, event)
+	})
 }

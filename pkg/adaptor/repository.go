@@ -8,7 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
+
+	"github.com/m-mizutani/golambda"
 )
 
 type Repository interface {
@@ -84,9 +85,9 @@ func (x *DynamoRepository) PutEntities(entities []*retrospector.Entity) error {
 	}
 
 	if n, err := x.table.Batch().Write().Put(items...).Run(); err != nil {
-		return errors.Wrap(err, "PutEntities").With("items", items)
+		return golambda.WrapError(err, "PutEntities").With("items", items)
 	} else if n != len(items) {
-		return errors.New("A number of wrote items is mismatched").With("n", n).With("items", items)
+		return golambda.NewError("A number of wrote items is mismatched").With("n", n).With("items", items)
 	}
 
 	return nil
@@ -99,7 +100,7 @@ func (x *DynamoRepository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospec
 		pk := fmt.Sprintf("entity/%s/%s", ioc.Type, ioc.Value.Data)
 		var entityItems []*entityItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&entityItems); err != nil {
-			return nil, errors.Wrap(err, "Batch get entities").With("pk", pk).With("ioc", ioc)
+			return nil, golambda.WrapError(err, "Batch get entities").With("pk", pk).With("ioc", ioc)
 		}
 
 		for _, item := range entityItems {
@@ -125,9 +126,9 @@ func (x *DynamoRepository) PutIOCSet(iocSet []*retrospector.IOC) error {
 	}
 
 	if n, err := x.table.Batch().Write().Put(items...).Run(); err != nil {
-		return errors.Wrap(err, "PutIOCSet").With("items", items)
+		return golambda.WrapError(err, "PutIOCSet").With("items", items)
 	} else if n != len(items) {
-		return errors.New("A number of wrote items is mismatched").With("n", n).With("items", items)
+		return golambda.NewError("A number of wrote items is mismatched").With("n", n).With("items", items)
 	}
 
 	return nil
@@ -141,7 +142,7 @@ func (x *DynamoRepository) GetIOCSet(entities []*retrospector.Entity) ([]*retros
 
 		var iocItems []*iocItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&iocItems); err != nil {
-			return nil, errors.Wrap(err, "Batch get entities").With("pk", pk).With("entity", entity)
+			return nil, golambda.WrapError(err, "Batch get entities").With("pk", pk).With("entity", entity)
 		}
 
 		for _, item := range iocItems {

@@ -2,15 +2,15 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/m-mizutani/golambda"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
-	"github.com/m-mizutani/retrospector/pkg/lambda"
+	"github.com/m-mizutani/retrospector/pkg/arguments"
 	"github.com/m-mizutani/retrospector/pkg/service"
 )
 
 // Handler is exporeted for test
-func Handler(args *lambda.Arguments) error {
-	recvEvents, err := args.DecapSNSoverSQSEvent()
+func Handler(args *arguments.Arguments, event golambda.Event) error {
+	recvEvents, err := event.DecapSNSonSQSMessage()
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func Handler(args *lambda.Arguments) error {
 			}
 
 			if err := rq.Error(); err != nil {
-				return errors.With(err, "s3", s3Record)
+				return golambda.WrapError(err).With("s3", s3Record)
 			}
 
 			for value, entities := range entityMap {
@@ -47,7 +47,7 @@ func Handler(args *lambda.Arguments) error {
 					{Value: value},
 				})
 				if err != nil {
-					return errors.With(err, "s3", s3Record)
+					return golambda.WrapError(err).With("s3", s3Record)
 				}
 				if len(matched) == 0 {
 					continue
@@ -60,7 +60,7 @@ func Handler(args *lambda.Arguments) error {
 					IOCChunk: matched,
 				}
 				if err := alertSvc.EmitToSlack(alert); err != nil {
-					return errors.With(err, "alert", alert).With("s3", s3Record)
+					return golambda.WrapError(err).With("alert", alert).With("s3", s3Record)
 				}
 			}
 		}
@@ -70,5 +70,8 @@ func Handler(args *lambda.Arguments) error {
 }
 
 func main() {
-	lambda.Run(Handler)
+	golambda.Start(func(event golambda.Event) error {
+		return Handler(arguments.New(), event)
+	})
+
 }
