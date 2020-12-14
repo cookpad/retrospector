@@ -100,7 +100,8 @@ func TestIOCRecord(t *testing.T) {
 		event := golambda.Event{
 			Origin: sqsEvent,
 		}
-		require.NoError(t, main.Handler(args, event))
+		_, err = main.Handler(args, event)
+		require.NoError(t, err)
 
 		resp, err := repo.GetIOCSet(keyEntities)
 		require.NoError(t, err)
@@ -137,7 +138,8 @@ func TestIOCRecord(t *testing.T) {
 			Repository: repo,
 		}
 		event := golambda.Event{Origin: sqsEvent}
-		require.NoError(t, main.Handler(args, event))
+		_, err = main.Handler(args, event)
+		require.NoError(t, err)
 
 		resp, err := repo.GetIOCSet(keyEntities)
 		require.NoError(t, err)

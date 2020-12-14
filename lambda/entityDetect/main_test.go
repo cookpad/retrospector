@@ -73,7 +73,8 @@ func TestEntityDetect(t *testing.T) {
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args, event))
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(httpClient.Requests))
 		assert.Equal(t, "test.example.com", httpClient.Requests[0].URL.Host)
@@ -101,7 +102,8 @@ func TestEntityDetect(t *testing.T) {
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args, event))
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 		assert.Equal(t, 0, len(httpClient.Requests))
 	})
 
@@ -126,7 +128,8 @@ func TestEntityDetect(t *testing.T) {
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args, event))
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 		assert.Equal(t, 0, len(httpClient.Requests))
 	})
 }

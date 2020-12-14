@@ -11,10 +11,10 @@ import (
 var logger = logging.Logger
 
 // Handler is exporeted for test
-func Handler(args *arguments.Arguments, event golambda.Event) error {
+func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, error) {
 	recvEvents, err := event.DecapSNSonSQSMessage()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	repoSvc := args.RepositoryService()
@@ -23,7 +23,7 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 	for _, event := range recvEvents {
 		var s3Event events.S3Event
 		if err := event.Bind(&s3Event); err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, s3Record := range s3Event.Records {
@@ -42,7 +42,7 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 			}
 
 			if err := rq.Error(); err != nil {
-				return golambda.WrapError(err).With("s3", s3Record)
+				return nil, golambda.WrapError(err).With("s3", s3Record)
 			}
 
 			var entities []*retrospector.Entity
@@ -51,16 +51,16 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 			}
 
 			if err := repoSvc.PutEntities(entities); err != nil {
-				return golambda.WrapError(err).With("s3", s3Record)
+				return nil, golambda.WrapError(err).With("s3", s3Record)
 			}
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func main() {
-	golambda.Start(func(event golambda.Event) error {
+	golambda.Start(func(event golambda.Event) (interface{}, error) {
 		return Handler(arguments.New(), event)
 	})
 }

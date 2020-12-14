@@ -31,13 +31,13 @@ func New() *Arguments {
 	args := &Arguments{}
 
 	if _, err := env.UnmarshalFromEnviron(args); err != nil {
-		golambda.Logger.Error().AnErr("err", err).Msg("Failed env.UnmarshalFromEnviron")
+		golambda.Logger.With("err", err).Error("Failed env.UnmarshalFromEnviron")
 		panic(err)
 	}
 
 	repo, err := adaptor.NewDynamoRepository(args.AwsRegion, args.RecordTableName)
 	if err != nil {
-		golambda.Logger.Error().AnErr("err", err).Msg("Failed NewDynamoRepository")
+		golambda.Logger.With("err", err).Error("Failed NewDynamoRepository")
 		panic(err)
 	}
 

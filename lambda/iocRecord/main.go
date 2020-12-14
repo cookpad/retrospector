@@ -7,10 +7,10 @@ import (
 )
 
 //Handler is exporeted for test
-func Handler(args *arguments.Arguments, event golambda.Event) error {
+func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, error) {
 	events, err := event.DecapSNSonSQSMessage()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	repo := args.RepositoryService()
@@ -18,20 +18,20 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 	for _, event := range events {
 		var iocChunk retrospector.IOCChunk
 		if err := event.Bind(&iocChunk); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := repo.PutIOCSet(iocChunk); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func main() {
 	args := arguments.New()
-	golambda.Start(func(event golambda.Event) error {
+	golambda.Start(func(event golambda.Event) (interface{}, error) {
 		return Handler(args, event)
 	})
 }

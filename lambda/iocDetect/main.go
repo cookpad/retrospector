@@ -8,10 +8,10 @@ import (
 )
 
 //Handler is exporeted for test
-func Handler(args *arguments.Arguments, event golambda.Event) error {
+func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, error) {
 	events, err := event.DecapSNSonSQSMessage()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	repo := args.RepositoryService()
@@ -20,13 +20,13 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 	for _, event := range events {
 		var iocChunk retrospector.IOCChunk
 		if err := event.Bind(&iocChunk); err != nil {
-			return golambda.WrapError(err).With("event", event)
+			return nil, golambda.WrapError(err).With("event", event)
 		}
 
 		for _, ioc := range iocChunk {
 			entities, err := repo.GetEntities([]*retrospector.IOC{ioc})
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			if len(entities) == 0 {
@@ -41,16 +41,16 @@ func Handler(args *arguments.Arguments, event golambda.Event) error {
 			}
 
 			if err := alertSvc.EmitToSlack(alert); err != nil {
-				return golambda.WrapError(err).With("ioc", ioc).With("alert", alert)
+				return nil, golambda.WrapError(err).With("ioc", ioc).With("alert", alert)
 			}
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 func main() {
-	golambda.Start(func(event golambda.Event) error {
+	golambda.Start(func(event golambda.Event) (interface{}, error) {
 		return Handler(arguments.New(), event)
 	})
 }

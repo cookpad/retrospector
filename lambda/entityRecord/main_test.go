@@ -55,5 +55,6 @@ func TestEntityRecord(t *testing.T) {
 		Repository: repo,
 		NewS3:      newS3,
 	}
-	require.NoError(t, main.Handler(args, event))
+	_, err := main.Handler(args, event)
+	require.NoError(t, err)
 }

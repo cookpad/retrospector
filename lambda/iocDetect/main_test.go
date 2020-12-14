@@ -91,8 +91,9 @@ func TestIOCDetect(t *testing.T) {
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args, golambda.Event{Origin: sqsEvent}))
-
+		event := golambda.Event{Origin: sqsEvent}
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(httpClient.Requests))
 		assert.Equal(t, "test.example.com", httpClient.Requests[0].URL.Host)
 		assert.Equal(t, "/slack", httpClient.Requests[0].URL.Path)
@@ -120,7 +121,8 @@ func TestIOCDetect(t *testing.T) {
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
 		event := golambda.Event{Origin: sqsEvent}
-		require.NoError(t, main.Handler(args, event))
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 
 		require.Equal(t, 0, len(httpClient.Requests))
 	})
@@ -147,8 +149,8 @@ func TestIOCDetect(t *testing.T) {
 			HTTP:            httpClient,
 			SlackWebhookURL: "https://test.example.com/slack",
 		}
-		require.NoError(t, main.Handler(args, event))
-
+		_, err := main.Handler(args, event)
+		require.NoError(t, err)
 		require.Equal(t, 0, len(httpClient.Requests))
 	})
 

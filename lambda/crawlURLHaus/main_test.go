@@ -29,7 +29,8 @@ func TestCrawlURLHausIntegration(t *testing.T) {
 		NewSNS:      newSNS,
 	}
 
-	require.NoError(t, main.Handler(args, golambda.Event{}))
+	_, err := main.Handler(args, golambda.Event{})
+	require.NoError(t, err)
 	assert.Greater(t, len(client.PublishInput), 1000)
 	assert.Equal(t, "us-east-1", client.Region)
 	assert.Equal(t, "arn:aws:sns:us-east-1:111122223333:my-topic", *client.PublishInput[0].TopicArn)
@@ -66,7 +67,8 @@ func TestCrawlURLHaus(t *testing.T) {
 		HTTP:        httpClient,
 	}
 
-	require.NoError(t, main.Handler(args, golambda.Event{}))
+	_, err := main.Handler(args, golambda.Event{})
+	require.NoError(t, err)
 	require.Equal(t, 1, len(client.PublishInput))
 	assert.Equal(t, "us-east-1", client.Region)
 	assert.Equal(t, "arn:aws:sns:us-east-1:111122223333:my-topic", *client.PublishInput[0].TopicArn)
