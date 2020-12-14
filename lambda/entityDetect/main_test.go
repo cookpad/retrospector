@@ -54,15 +54,16 @@ func TestEntityDetect(t *testing.T) {
 
 	t.Run("matched", func(t *testing.T) {
 		// Setup mock
-		repo := mock.NewRepository()
-		require.NoError(t, repo.PutIOCSet([]*retrospector.IOC{
+		iocData := []*retrospector.IOC{
 			{
 				Value: retrospector.Value{
 					Data: "five",
 					Type: retrospector.ValueDomainName,
 				},
 			},
-		}))
+		}
+		repo := mock.NewRepository()
+		require.NoError(t, repo.PutIOCSet(iocData))
 		httpClient := &mock.HTTPClient{
 			RespCode: http.StatusOK,
 			RespBody: ioutil.NopCloser(strings.NewReader("")),
@@ -79,6 +80,11 @@ func TestEntityDetect(t *testing.T) {
 		require.Equal(t, 1, len(httpClient.Requests))
 		assert.Equal(t, "test.example.com", httpClient.Requests[0].URL.Host)
 		assert.Equal(t, "/slack", httpClient.Requests[0].URL.Path)
+
+		iocSet, err := repo.GetIOCSet([]*retrospector.Entity{{Value: iocData[0].Value}})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(iocSet))
+		assert.True(t, iocSet[0].Detected)
 	})
 
 	t.Run("mismatched by data", func(t *testing.T) {

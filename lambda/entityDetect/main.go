@@ -43,7 +43,7 @@ func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, erro
 			}
 
 			for value, entities := range entityMap {
-				matched, err := repoSvc.GetIOCSet([]*retrospector.Entity{
+				matched, err := repoSvc.DetectIOCSet([]*retrospector.Entity{
 					{Value: value},
 				})
 				if err != nil {
@@ -61,6 +61,12 @@ func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, erro
 				}
 				if err := alertSvc.EmitToSlack(alert); err != nil {
 					return nil, golambda.WrapError(err).With("alert", alert).With("s3", s3Record)
+				}
+
+				for _, ioc := range matched {
+					if err := repoSvc.UpdateIOCDetected(ioc); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}

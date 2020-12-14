@@ -97,6 +97,11 @@ func TestIOCDetect(t *testing.T) {
 		require.Equal(t, 1, len(httpClient.Requests))
 		assert.Equal(t, "test.example.com", httpClient.Requests[0].URL.Host)
 		assert.Equal(t, "/slack", httpClient.Requests[0].URL.Path)
+
+		// Do not detect for same entity twice
+		_, err = main.Handler(args, event)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(httpClient.Requests))
 	})
 
 	t.Run("not detect any entity by data", func(t *testing.T) {

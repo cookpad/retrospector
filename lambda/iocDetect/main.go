@@ -24,7 +24,7 @@ func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, erro
 		}
 
 		for _, ioc := range iocChunk {
-			entities, err := repo.GetEntities([]*retrospector.IOC{ioc})
+			entities, err := repo.DetectEntities([]*retrospector.IOC{ioc})
 			if err != nil {
 				return nil, err
 			}
@@ -42,6 +42,12 @@ func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, erro
 
 			if err := alertSvc.EmitToSlack(alert); err != nil {
 				return nil, golambda.WrapError(err).With("ioc", ioc).With("alert", alert)
+			}
+
+			for _, entity := range entities {
+				if err := repo.UpdateEntityDetected(entity); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
