@@ -187,4 +187,79 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 			assert.Contains(t, resp, data[1])
 		})
 	})
+
+	t.Run("update detection status of entity", func(t *testing.T) {
+		v1 := uuid.New().String()
+
+		data := []*retrospector.Entity{
+			{
+				Value: retrospector.Value{
+					Data: v1,
+					Type: retrospector.ValueDomainName,
+				},
+				Subject: "tester",
+			},
+		}
+		require.NoError(t, svc.PutEntities(data))
+
+		entities := []*retrospector.IOC{
+			{
+				Value: retrospector.Value{
+					Data: v1,
+					Type: retrospector.ValueDomainName,
+				},
+			},
+		}
+
+		resp, err := svc.GetEntities(entities)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp))
+		assert.False(t, resp[0].Detected)
+
+		require.NoError(t, svc.UpdateEntityDetected(data[0]))
+
+		resp, err = svc.GetEntities(entities)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp))
+		assert.True(t, resp[0].Detected)
+	})
+
+	t.Run("update detection status of IOC", func(t *testing.T) {
+		now := time.Now()
+		v1 := uuid.New().String()
+
+		data := []*retrospector.IOC{
+			{
+				Value: retrospector.Value{
+					Data: v1,
+					Type: retrospector.ValueDomainName,
+				},
+
+				Source:    "blue",
+				UpdatedAt: now.Unix(),
+			},
+		}
+		require.NoError(t, svc.PutIOCSet(data))
+
+		entities := []*retrospector.Entity{
+			{
+				Value: retrospector.Value{
+					Data: v1,
+					Type: retrospector.ValueDomainName,
+				},
+			},
+		}
+
+		resp, err := svc.GetIOCSet(entities)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp))
+		assert.False(t, resp[0].Detected)
+
+		require.NoError(t, svc.UpdateIOCDetected(data[0]))
+
+		resp, err = svc.GetIOCSet(entities)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp))
+		assert.True(t, resp[0].Detected)
+	})
 }

@@ -53,3 +53,11 @@ func (x *RepositoryService) PutIOCSet(iocSet []*retrospector.IOC) error {
 func (x *RepositoryService) GetIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error) {
 	return x.repo.GetIOCSet(entities)
 }
+
+func (x *RepositoryService) UpdateEntityDetected(entity *retrospector.Entity) error {
+	return x.repo.UpdateEntityDetected(entity)
+}
+
+func (x *RepositoryService) UpdateIOCDetected(ioc *retrospector.IOC) error {
+	return x.repo.UpdateIOCDetected(ioc)
+}

@@ -32,15 +32,15 @@ func TestAlertServiceSlackIntegration(t *testing.T) {
 			{
 				Source:      "google drive",
 				RecordedAt:  time.Now().Unix(),
-				Description: "open hogehoge file",
+				Description: "This is test alert, please ignore me",
 			},
 		},
 		IOCChunk: retrospector.IOCChunk{
 			{
 				Source:      "URLHaus",
 				UpdatedAt:   time.Now().Add(time.Hour * -10).Unix(),
-				Reason:      "bad smell",
-				Description: "something wrong",
+				Reason:      "Testing",
+				Description: "This is test alert, please ignore me",
 			},
 		},
 	})

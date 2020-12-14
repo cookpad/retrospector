@@ -73,5 +73,4 @@ func main() {
 	golambda.Start(func(event golambda.Event) (interface{}, error) {
 		return Handler(arguments.New(), event)
 	})
-
 }
