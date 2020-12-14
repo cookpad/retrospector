@@ -211,17 +211,25 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 			},
 		}
 
-		resp, err := svc.GetEntities(entities)
+		resp1, err := svc.GetEntities(entities)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(resp))
-		assert.False(t, resp[0].Detected)
+		require.Equal(t, 1, len(resp1))
+		assert.False(t, resp1[0].Detected)
+
+		resp2, err := svc.DetectEntities(entities)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp2))
 
 		require.NoError(t, svc.UpdateEntityDetected(data[0]))
 
-		resp, err = svc.GetEntities(entities)
+		resp3, err := svc.GetEntities(entities)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(resp))
-		assert.True(t, resp[0].Detected)
+		require.Equal(t, 1, len(resp3))
+		assert.True(t, resp3[0].Detected)
+
+		resp4, err := svc.DetectEntities(entities)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(resp4))
 	})
 
 	t.Run("update detection status of IOC", func(t *testing.T) {
@@ -250,16 +258,24 @@ func testRepositoryService(t *testing.T, svc *service.RepositoryService) {
 			},
 		}
 
-		resp, err := svc.GetIOCSet(entities)
+		resp1, err := svc.GetIOCSet(entities)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(resp))
-		assert.False(t, resp[0].Detected)
+		require.Equal(t, 1, len(resp1))
+		assert.False(t, resp1[0].Detected)
+
+		resp2, err := svc.DetectIOCSet(entities)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(resp2))
 
 		require.NoError(t, svc.UpdateIOCDetected(data[0]))
 
-		resp, err = svc.GetIOCSet(entities)
+		resp3, err := svc.GetIOCSet(entities)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(resp))
-		assert.True(t, resp[0].Detected)
+		require.Equal(t, 1, len(resp3))
+		assert.True(t, resp3[0].Detected)
+
+		resp4, err := svc.DetectIOCSet(entities)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(resp4))
 	})
 }

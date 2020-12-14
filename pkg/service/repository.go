@@ -31,6 +31,23 @@ func (x *RepositoryService) PutEntities(entities []*retrospector.Entity) error {
 	return nil
 }
 
+func (x *RepositoryService) DetectEntities(iocSet []*retrospector.IOC) ([]*retrospector.Entity, error) {
+	entities, err := x.repo.GetEntities(iocSet)
+	if err != nil {
+		return nil, err
+	}
+
+	var detected []*retrospector.Entity
+	for _, entity := range entities {
+		if entity.Detected { // Already detected
+			continue
+		}
+		detected = append(detected, entity)
+	}
+
+	return detected, nil
+}
+
 func (x *RepositoryService) GetEntities(iocSet []*retrospector.IOC) ([]*retrospector.Entity, error) {
 	return x.repo.GetEntities(iocSet)
 }
@@ -48,6 +65,23 @@ func (x *RepositoryService) PutIOCSet(iocSet []*retrospector.IOC) error {
 		}
 	}
 	return nil
+}
+
+func (x *RepositoryService) DetectIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error) {
+	iocSet, err := x.repo.GetIOCSet(entities)
+	if err != nil {
+		return nil, err
+	}
+
+	var detected []*retrospector.IOC
+	for _, ioc := range iocSet {
+		if ioc.Detected {
+			continue
+		}
+		detected = append(detected, ioc)
+	}
+
+	return detected, nil
 }
 
 func (x *RepositoryService) GetIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error) {
