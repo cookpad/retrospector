@@ -105,7 +105,15 @@ export class RetrospectorStack extends cdk.Stack {
     const lambdaRole = (props.lambdaRoleARN !== undefined) ? iam.Role.fromRoleArn(this, "LambdaRole", props.lambdaRoleARN, {
       mutable: false,
     }) : undefined;
-    const buildPath = lambda.Code.fromAsset(path.join(__dirname, '../build'));
+
+    const rootPath = path.resolve(__dirname, '..');
+    const asset = lambda.Code.fromAsset(rootPath, {
+      bundling: {
+        image: lambda.Runtime.GO_1_X.bundlingDockerImage,
+        user: 'root',
+        command: ['make', 'asset'],
+      },
+    });
 
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
@@ -124,7 +132,7 @@ export class RetrospectorStack extends cdk.Stack {
       const func = new lambda.Function(this, crawler.funcName, {
         runtime: lambda.Runtime.GO_1_X,
         handler: crawler.funcName,
-        code: buildPath,
+        code: asset,
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
@@ -170,7 +178,7 @@ export class RetrospectorStack extends cdk.Stack {
       const func = new lambda.Function(this, handler.funcName, {
         runtime: lambda.Runtime.GO_1_X,
         handler: handler.funcName,
-        code: buildPath,
+        code: asset,
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
