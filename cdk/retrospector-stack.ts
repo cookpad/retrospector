@@ -15,11 +15,18 @@ import {
 import * as path from 'path';
 import { SqsSubscription } from "@aws-cdk/aws-sns-subscriptions";
 
+interface CrawlerSettings {
+  readonly enableURLHaus?: boolean;
+  readonly enableOTX?: boolean;
+  readonly secretsARN?: string;
+};
 
 interface RetrospectorProps extends cdk.StackProps{
   readonly lambdaRoleARN?: string;
   readonly entityObjectTopicARN?: string;
   readonly slackWebhookURL?: string;
+  readonly crawler?: CrawlerSettings;
+
   readonly dynamoCapacity?: number;
   readonly entityLambdaConcurrency?: number;
   readonly iocLambdaConcurrency?: number;
@@ -56,9 +63,10 @@ export class RetrospectorStack extends cdk.Stack {
   crawlers: Array<lambda.Function>;
   handlers: {[key: string]: lambda.Function};
 
-  constructor(scope: cdk.Construct, id: string, props?: RetrospectorProps) {
-    super(scope, id, props);
-    props = props || {};
+  constructor(scope: cdk.Construct, id: string, retrospectorProps?: RetrospectorProps) {
+    super(scope, id, retrospectorProps);
+    const props = retrospectorProps || {};
+    const crawlerSettings = props.crawler || {};
 
     // DynamoDB
     this.recordTable = new dynamodb.Table(this, "recordTable", {
@@ -119,15 +127,26 @@ export class RetrospectorStack extends cdk.Stack {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
       RECORD_TABLE_NAME: this.recordTable.tableName,
       SLACK_WEBHOOK_URL: props.slackWebhookURL || "",
+      SECRETS_ARN: crawlerSettings.secretsARN || "",
       SENTRY_DSN: props.sentryDSN || "",
       SENTRY_ENVIRONMENT: props.sentryEnv || "",
     }
 
     // Setup crawlers
-    const crawlers : Array<crawler> = [{
-      funcName: 'crawlURLHaus',
-      interval: cdk.Duration.hours(24),
-    }]
+    const crawlers : Array<crawler> = [];
+    if (crawlerSettings.enableURLHaus) {
+      crawlers.push({
+        funcName: 'crawlURLHaus',
+        interval: cdk.Duration.hours(24),
+      });
+    }
+    if (crawlerSettings.enableOTX) {
+      crawlers.push({
+        funcName: 'crawlOTX',
+        interval: cdk.Duration.hours(1),
+      });
+    }
+
     crawlers.forEach(crawler => {
       const func = new lambda.Function(this, crawler.funcName, {
         runtime: lambda.Runtime.GO_1_X,

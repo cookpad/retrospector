@@ -94,21 +94,9 @@ func Handler(args *arguments.Arguments, event golambda.Event) (interface{}, erro
 	var iocChunk retrospector.IOCChunk
 	for _, ioc := range iocMap {
 		iocChunk = append(iocChunk, ioc)
-
-		if len(iocChunk) >= chunkSizeLimit {
-			if err := snsSvc.Publish(args.IOCTopicARN, iocChunk); err != nil {
-				return nil, golambda.WrapError(err).With("ioc", iocChunk).With("topic", args.IOCTopicARN)
-			}
-			iocChunk = nil
-		}
 	}
-
-	if len(iocChunk) > 0 {
-		if err := snsSvc.Publish(args.IOCTopicARN, iocChunk); err != nil {
-			return nil, golambda.WrapError(err).
-				With("ioc", iocChunk).
-				With("topic", args.IOCTopicARN)
-		}
+	if err := snsSvc.PublishIOC(args.IOCTopicARN, iocChunk); err != nil {
+		return nil, golambda.WrapError(err).With("topic", args.IOCTopicARN)
 	}
 
 	return nil, nil

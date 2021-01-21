@@ -15,12 +15,18 @@ type Arguments struct {
 	RecordTableName string `env:"RECORD_TABLE_NAME"`
 	SlackWebhookURL string `env:"SLACK_WEBHOOK_URL"`
 	AwsRegion       string `env:"AWS_REGION"`
+	SecretsARN      string `env:"SECRETS_ARN"`
 
 	// Do not change them in each lambda Function. They must be accessed in only pkg/lambda
-	Repository adaptor.Repository       `env:"-"`
-	NewS3      adaptor.S3ClientFactory  `env:"-"`
-	NewSNS     adaptor.SNSClientFactory `env:"-"`
-	HTTP       adaptor.HTTPClient       `env:"-"`
+	Repository adaptor.Repository             `env:"-"`
+	NewS3      adaptor.S3ClientFactory        `env:"-"`
+	NewSNS     adaptor.SNSClientFactory       `env:"-"`
+	NewSM      golambda.SecretsManagerFactory `env:"-"`
+	HTTP       adaptor.HTTPClient             `env:"-"`
+}
+
+type Secrets struct {
+	OTXToken string `json:"otx_token"`
 }
 
 // -----------------------
@@ -87,4 +93,13 @@ func (x *Arguments) AlertService() *service.AlertService {
 		HTTPClient:              httpClient,
 		SlackIncomingWebhookURL: x.SlackWebhookURL,
 	})
+}
+
+func (x *Arguments) GetSecrets() (*Secrets, error) {
+	var secrets Secrets
+	if err := golambda.GetSecretValuesWithFactory(x.SecretsARN, &secrets, x.NewSM); err != nil {
+		return nil, golambda.WrapError(err).With("ARN", x.SecretsARN)
+	}
+
+	return &secrets, nil
 }

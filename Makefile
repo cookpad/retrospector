@@ -6,6 +6,7 @@ FUNCTIONS = \
 	$(CODE_DIR)/build/iocDetect \
 	$(CODE_DIR)/build/entityRecord \
 	$(CODE_DIR)/build/entityDetect \
+	$(CODE_DIR)/build/crawlOTX \
 	$(CODE_DIR)/build/crawlURLHaus
 
 SRC=$(CODE_DIR)/*.go $(CODE_DIR)/pkg/*/*.go
@@ -22,6 +23,8 @@ $(CODE_DIR)/build/entityDetect: $(SRC) $(CODE_DIR)/lambda/entityDetect/*.go
 	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/entityDetect $(CODE_DIR)/lambda/entityDetect/
 $(CODE_DIR)/build/crawlURLHaus: $(SRC) $(CODE_DIR)/lambda/crawlURLHaus/*.go
 	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/crawlURLHaus $(CODE_DIR)/lambda/crawlURLHaus/
+$(CODE_DIR)/build/crawlOTX: $(SRC) $(CODE_DIR)/lambda/crawlOTX/*.go
+	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/crawlOTX $(CODE_DIR)/lambda/crawlOTX/
 
 build: $(FUNCTIONS)
 
