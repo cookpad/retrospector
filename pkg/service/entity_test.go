@@ -37,7 +37,7 @@ func testS3Service(t *testing.T, newS3 adaptor.S3ClientFactory, s3Region, s3Buck
 					Data: "10.1.2.3",
 					Type: retrospector.ValueIPAddr,
 				},
-				Label:      "hoge:1",
+				Source:     "hoge:1",
 				RecordedAt: now.Unix(),
 			},
 			{
@@ -45,7 +45,7 @@ func testS3Service(t *testing.T, newS3 adaptor.S3ClientFactory, s3Region, s3Buck
 					Data: "example.com",
 					Type: retrospector.ValueDomainName,
 				},
-				Label:      "moge:1",
+				Source:     "moge:1",
 				RecordedAt: now.Add(time.Second).Unix(),
 			},
 			{

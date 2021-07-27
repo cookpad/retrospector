@@ -17,9 +17,10 @@ func init() {
 
 // Init configures logger
 func Init(logLevel string) {
-
 	var zeroLogLevel zerolog.Level
 	switch strings.ToLower(logLevel) {
+	case "trace":
+		zeroLogLevel = zerolog.TraceLevel
 	case "debug":
 		zeroLogLevel = zerolog.DebugLevel
 	case "info":

@@ -20,12 +20,31 @@ func NewRepository() adaptor.Repository {
 	}
 }
 
+func makeEntityPKey(value *retrospector.Value) string {
+	return fmt.Sprintf("entity/%s/%s", value.Type, value.Data)
+}
+
+func makeIOCPKey(value *retrospector.Value) string {
+	return fmt.Sprintf("ioc/%s/%s", value.Type, value.Data)
+}
+
+func makeIOCSKey(ioc *retrospector.IOC) string {
+	return ioc.Source
+}
+
+func makeEntitySKey(entity *retrospector.Entity) string {
+	sk := entity.Subject
+	if sk == "" {
+		sk = time.Unix(entity.RecordedAt, 0).Format("20060102_150405")
+	}
+	return sk
+}
+
 // PutEntities puts entity set to memory
 func (x *Repository) PutEntities(entities []*retrospector.Entity) error {
 	for _, entity := range entities {
-		ts := time.Unix(entity.RecordedAt, 0)
-		pk := fmt.Sprintf("entity/%s/%s", entity.Type, entity.Data)
-		sk := ts.Format("20060102_150405")
+		pk := makeEntityPKey(&entity.Value)
+		sk := makeEntitySKey(entity)
 
 		smap, ok := x.data[pk]
 		if !ok {
@@ -42,7 +61,8 @@ func (x *Repository) PutEntities(entities []*retrospector.Entity) error {
 func (x *Repository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospector.Entity, error) {
 	var results []*retrospector.Entity
 	for _, ioc := range iocSet {
-		pk := fmt.Sprintf("entity/%s/%s", ioc.Type, ioc.Data)
+		pk := makeEntityPKey(&ioc.Value)
+
 		for _, v := range x.data[pk] {
 			entity, ok := v.(*retrospector.Entity)
 			if !ok {
@@ -55,11 +75,26 @@ func (x *Repository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospector.En
 	return results, nil
 }
 
+func (x *Repository) UpdateEntityDetected(target *retrospector.Entity) error {
+	pk := makeEntityPKey(&target.Value)
+	sk := makeEntitySKey(target)
+
+	if p, ok := x.data[pk]; ok {
+		if s, ok := p[sk]; ok {
+			if entity, ok := s.(*retrospector.Entity); ok {
+				entity.Detected = true
+			}
+		}
+	}
+
+	return nil
+}
+
 // PutIOCSet puts IOC set to memory
 func (x *Repository) PutIOCSet(iocSet []*retrospector.IOC) error {
 	for _, ioc := range iocSet {
-		pk := fmt.Sprintf("ioc/%s/%s", ioc.Type, ioc.Data)
-		sk := ioc.Source
+		pk := makeIOCPKey(&ioc.Value)
+		sk := makeIOCSKey(ioc)
 
 		smap, ok := x.data[pk]
 		if !ok {
@@ -76,7 +111,8 @@ func (x *Repository) PutIOCSet(iocSet []*retrospector.IOC) error {
 func (x *Repository) GetIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error) {
 	var results []*retrospector.IOC
 	for _, entity := range entities {
-		pk := fmt.Sprintf("ioc/%s/%s", entity.Type, entity.Data)
+		pk := makeIOCPKey(&entity.Value)
+
 		for _, v := range x.data[pk] {
 			ioc, ok := v.(*retrospector.IOC)
 			if !ok {
@@ -87,4 +123,19 @@ func (x *Repository) GetIOCSet(entities []*retrospector.Entity) ([]*retrospector
 	}
 
 	return results, nil
+}
+
+func (x *Repository) UpdateIOCDetected(target *retrospector.IOC) error {
+	pk := makeIOCPKey(&target.Value)
+	sk := makeIOCSKey(target)
+
+	if p, ok := x.data[pk]; ok {
+		if s, ok := p[sk]; ok {
+			if ioc, ok := s.(*retrospector.IOC); ok {
+				ioc.Detected = true
+			}
+		}
+	}
+
+	return nil
 }

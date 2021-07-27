@@ -8,14 +8,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
 	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/errors"
+
+	"github.com/m-mizutani/golambda"
 )
 
 type Repository interface {
 	PutEntities(entities []*retrospector.Entity) error
 	GetEntities(iocSet []*retrospector.IOC) ([]*retrospector.Entity, error)
+	UpdateEntityDetected(entity *retrospector.Entity) error
 	PutIOCSet(iocSet []*retrospector.IOC) error
 	GetIOCSet(entities []*retrospector.Entity) ([]*retrospector.IOC, error)
+	UpdateIOCDetected(ioc *retrospector.IOC) error
 }
 
 type RepositoryFactory func(region, tableName string) (Repository, error)
@@ -63,24 +66,35 @@ type iocItem struct {
 	retrospector.IOC
 }
 
+func makeEntityPKey(value *retrospector.Value) string {
+	return fmt.Sprintf("entity/%s/%s", value.Type, value.Data)
+}
+
+func makeEntitySKey(entity *retrospector.Entity) string {
+	sk := entity.Subject
+	if sk == "" {
+		sk = time.Unix(entity.RecordedAt, 0).Format("20060102_150405")
+	}
+	return sk
+}
+
 func (x *DynamoRepository) PutEntities(entities []*retrospector.Entity) error {
 	var items []interface{}
 	for _, entity := range entities {
-		ts := time.Unix(entity.RecordedAt, 0)
 		items = append(items, &entityItem{
 			dynamoItem: dynamoItem{
-				PK:        fmt.Sprintf("entity/%s/%s", entity.Type, entity.Value),
-				SK:        ts.Format("20060102_150405"),
-				ExpiresAt: ts.Add(entityTimeToLive).Unix(),
+				PK:        makeEntityPKey(&entity.Value),
+				SK:        makeEntitySKey(entity),
+				ExpiresAt: time.Unix(entity.RecordedAt, 0).Add(entityTimeToLive).Unix(),
 			},
 			Entity: *entity,
 		})
 	}
 
 	if n, err := x.table.Batch().Write().Put(items...).Run(); err != nil {
-		return errors.Wrap(err, "PutEntities").With("items", items)
+		return golambda.WrapError(err, "PutEntities").With("items", items)
 	} else if n != len(items) {
-		return errors.New("A number of wrote items is mismatched").With("n", n).With("items", items)
+		return golambda.NewError("A number of wrote items is mismatched").With("n", n).With("items", items)
 	}
 
 	return nil
@@ -90,10 +104,10 @@ func (x *DynamoRepository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospec
 	var entities []*retrospector.Entity
 
 	for _, ioc := range iocSet {
-		pk := fmt.Sprintf("entity/%s/%s", ioc.Type, ioc.Value)
+		pk := makeEntityPKey(&ioc.Value)
 		var entityItems []*entityItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&entityItems); err != nil {
-			return nil, errors.Wrap(err, "Batch get entities").With("pk", pk).With("ioc", ioc)
+			return nil, golambda.WrapError(err, "Batch get entities").With("pk", pk).With("ioc", ioc)
 		}
 
 		for _, item := range entityItems {
@@ -104,14 +118,38 @@ func (x *DynamoRepository) GetEntities(iocSet []*retrospector.IOC) ([]*retrospec
 	return entities, nil
 }
 
+func (x *DynamoRepository) UpdateEntityDetected(entity *retrospector.Entity) error {
+	pk := makeEntityPKey(&entity.Value)
+	sk := makeEntitySKey(entity)
+
+	q := x.table.Update(dynamoHashKey, pk).
+		Range(dynamoRangeKey, sk).
+		Set("detected", true)
+
+	if err := q.Run(); err != nil {
+		return golambda.WrapError(err, "Failed to update entity to detected").
+			With("entity", entity).With("pk", pk).With("sk", sk)
+	}
+
+	return nil
+}
+
+func makeIOCPKey(value *retrospector.Value) string {
+	return fmt.Sprintf("ioc/%s/%s", value.Type, value.Data)
+}
+
+func makeIOCSKey(ioc *retrospector.IOC) string {
+	return ioc.Source
+}
+
 func (x *DynamoRepository) PutIOCSet(iocSet []*retrospector.IOC) error {
 	var items []interface{}
 	for _, ioc := range iocSet {
 		ts := time.Unix(ioc.UpdatedAt, 0)
 		items = append(items, &iocItem{
 			dynamoItem: dynamoItem{
-				PK:        fmt.Sprintf("ioc/%s/%s", ioc.Type, ioc.Value),
-				SK:        ioc.Source,
+				PK:        makeIOCPKey(&ioc.Value),
+				SK:        makeIOCSKey(ioc),
 				ExpiresAt: ts.Add(iocTimeToLive).Unix(),
 			},
 			IOC: *ioc,
@@ -119,9 +157,9 @@ func (x *DynamoRepository) PutIOCSet(iocSet []*retrospector.IOC) error {
 	}
 
 	if n, err := x.table.Batch().Write().Put(items...).Run(); err != nil {
-		return errors.Wrap(err, "PutIOCSet").With("items", items)
+		return golambda.WrapError(err, "PutIOCSet").With("items", items)
 	} else if n != len(items) {
-		return errors.New("A number of wrote items is mismatched").With("n", n).With("items", items)
+		return golambda.NewError("A number of wrote items is mismatched").With("n", n).With("items", items)
 	}
 
 	return nil
@@ -131,11 +169,11 @@ func (x *DynamoRepository) GetIOCSet(entities []*retrospector.Entity) ([]*retros
 
 	var iocSet []*retrospector.IOC
 	for _, entity := range entities {
-		pk := fmt.Sprintf("ioc/%s/%s", entity.Type, entity.Value)
+		pk := makeIOCPKey(&entity.Value)
 
 		var iocItems []*iocItem
 		if err := x.table.Get(dynamoHashKey, pk).All(&iocItems); err != nil {
-			return nil, errors.Wrap(err, "Batch get entities").With("pk", pk).With("entity", entity)
+			return nil, golambda.WrapError(err, "Batch get entities").With("pk", pk).With("entity", entity)
 		}
 
 		for _, item := range iocItems {
@@ -144,4 +182,20 @@ func (x *DynamoRepository) GetIOCSet(entities []*retrospector.Entity) ([]*retros
 	}
 
 	return iocSet, nil
+}
+
+func (x *DynamoRepository) UpdateIOCDetected(ioc *retrospector.IOC) error {
+	pk := makeIOCPKey(&ioc.Value)
+	sk := makeIOCSKey(ioc)
+
+	q := x.table.Update(dynamoHashKey, pk).
+		Range(dynamoRangeKey, sk).
+		Set("detected", true)
+
+	if err := q.Run(); err != nil {
+		return golambda.WrapError(err, "Failed to update IOC to detected").
+			With("ioc", ioc).With("pk", pk).With("sk", sk)
+	}
+
+	return nil
 }

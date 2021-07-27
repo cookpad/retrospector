@@ -15,10 +15,23 @@ import {
 import * as path from 'path';
 import { SqsSubscription } from "@aws-cdk/aws-sns-subscriptions";
 
+interface CrawlerSettings {
+  readonly enableURLHaus?: boolean;
+  readonly enableOTX?: boolean;
+  readonly secretsARN?: string;
+};
 
 interface RetrospectorProps extends cdk.StackProps{
   readonly lambdaRoleARN?: string;
   readonly entityObjectTopicARN?: string;
+  readonly slackWebhookURL?: string;
+  readonly crawler?: CrawlerSettings;
+
+  readonly dynamoCapacity?: number;
+  readonly entityLambdaConcurrency?: number;
+  readonly iocLambdaConcurrency?: number;
+  readonly sentryDSN?: string;
+  readonly sentryEnv?: string;
 };
 
 interface crawler {
@@ -50,32 +63,37 @@ export class RetrospectorStack extends cdk.Stack {
   crawlers: Array<lambda.Function>;
   handlers: {[key: string]: lambda.Function};
 
-  constructor(scope: cdk.Construct, id: string, props?: RetrospectorProps) {
-    super(scope, id, props);
-
-    props ||= {};
+  constructor(scope: cdk.Construct, id: string, retrospectorProps?: RetrospectorProps) {
+    super(scope, id, retrospectorProps);
+    const props = retrospectorProps || {};
+    const crawlerSettings = props.crawler || {};
 
     // DynamoDB
     this.recordTable = new dynamodb.Table(this, "recordTable", {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
       timeToLiveAttribute: "expires_at",
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: props.dynamoCapacity || 100,
+      writeCapacity: props.dynamoCapacity || 100,
     });
 
     // SQS
-    this.iocRecordQueue = new sqs.Queue(this, 'iocRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
+    const queues : {[key: string]: sqs.Queue} = {};
+    ['iocRecord', 'iocDetect', 'entityRecord', 'entityDetect'].forEach(queueName => {
+      const dlq = new sqs.Queue(this, queueName + 'DLQ');
+      queues[queueName] = new sqs.Queue(this, queueName + 'Queue' ,{
+        visibilityTimeout: cdk.Duration.seconds(300),
+        deadLetterQueue: {
+          maxReceiveCount: 3,
+          queue: dlq,
+        }
+      });
     });
-    this.iocDetectQueue = new sqs.Queue(this, 'iocDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
-    });
-    this.entityRecordQueue = new sqs.Queue(this, 'entityRecordQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
-    });
-    this.entityDetectQueue = new sqs.Queue(this, 'entityDetectQueue' ,{
-      visibilityTimeout: cdk.Duration.seconds(120),
-    });
+    this.iocRecordQueue = queues['iocRecord'];
+    this.iocDetectQueue = queues['iocDetect'];
+    this.entityRecordQueue = queues['entityRecord'];
+    this.entityDetectQueue = queues['entityDetect'];
 
     // SNS
     this.iocTopic = new sns.Topic(this, "iocTopic", {});
@@ -95,26 +113,48 @@ export class RetrospectorStack extends cdk.Stack {
     const lambdaRole = (props.lambdaRoleARN !== undefined) ? iam.Role.fromRoleArn(this, "LambdaRole", props.lambdaRoleARN, {
       mutable: false,
     }) : undefined;
-    const buildPath = lambda.Code.fromAsset(path.join(__dirname, '../build'));
+
+    const rootPath = path.resolve(__dirname, '..');
+    const asset = lambda.Code.fromAsset(rootPath, {
+      bundling: {
+        image: lambda.Runtime.GO_1_X.bundlingDockerImage,
+        user: 'root',
+        command: ['make', 'asset'],
+      },
+    });
 
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
       RECORD_TABLE_NAME: this.recordTable.tableName,
+      SLACK_WEBHOOK_URL: props.slackWebhookURL || "",
+      SECRETS_ARN: crawlerSettings.secretsARN || "",
+      SENTRY_DSN: props.sentryDSN || "",
+      SENTRY_ENVIRONMENT: props.sentryEnv || "",
     }
 
     // Setup crawlers
-    const crawlers : Array<crawler> = [{
-      funcName: 'crawlURLHouse',
-      interval: cdk.Duration.hours(24),
-    }]
+    const crawlers : Array<crawler> = [];
+    if (crawlerSettings.enableURLHaus) {
+      crawlers.push({
+        funcName: 'crawlURLHaus',
+        interval: cdk.Duration.hours(24),
+      });
+    }
+    if (crawlerSettings.enableOTX) {
+      crawlers.push({
+        funcName: 'crawlOTX',
+        interval: cdk.Duration.hours(1),
+      });
+    }
+
     crawlers.forEach(crawler => {
       const func = new lambda.Function(this, crawler.funcName, {
         runtime: lambda.Runtime.GO_1_X,
         handler: crawler.funcName,
-        code: buildPath,
+        code: asset,
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
-        memorySize: 256,
+        memorySize: 1024,
         environment: baseEnvVars,
         reservedConcurrentExecutions: 1,
       });
@@ -132,29 +172,32 @@ export class RetrospectorStack extends cdk.Stack {
       {
         funcName: 'iocRecord',
         source: this.iocRecordQueue,
-        concurrent: 1,
+        concurrent: props.iocLambdaConcurrency || 1,
       },
       {
         funcName: 'iocDetect',
         source: this.iocDetectQueue,
-        concurrent: 1,
+        concurrent: props.iocLambdaConcurrency || 1,
       },
       {
         funcName: 'entityRecord',
         source: this.entityRecordQueue,
-        concurrent: 10,
+        concurrent: props.entityLambdaConcurrency || 10,
       },
       {
         funcName: 'entityDetect',
         source: this.entityDetectQueue,
-        concurrent: 10,
+        concurrent: props.entityLambdaConcurrency || 10,
       },
     ];
+
+    this.handlers = {};
+
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
         runtime: lambda.Runtime.GO_1_X,
         handler: handler.funcName,
-        code: buildPath,
+        code: asset,
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
@@ -164,7 +207,7 @@ export class RetrospectorStack extends cdk.Stack {
       });
       this.handlers[handler.funcName] = func;
 
-      if (lambdaRole == undefined) {
+      if (lambdaRole === undefined) {
         this.recordTable.grantReadWriteData(func);
       }
     })
