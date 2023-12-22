@@ -114,15 +114,6 @@ export class RetrospectorStack extends cdk.Stack {
       mutable: false,
     }) : undefined;
 
-    const rootPath = path.resolve(__dirname, '..');
-    const asset = lambda.Code.fromAsset(rootPath, {
-      bundling: {
-        image: lambda.Runtime.GO_1_X.bundlingDockerImage,
-        user: 'root',
-        command: ['make', 'asset'],
-      },
-    });
-
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
       RECORD_TABLE_NAME: this.recordTable.tableName,
@@ -149,9 +140,9 @@ export class RetrospectorStack extends cdk.Stack {
 
     crawlers.forEach(crawler => {
       const func = new lambda.Function(this, crawler.funcName, {
-        runtime: lambda.Runtime.GO_1_X,
-        handler: crawler.funcName,
-        code: asset,
+        runtime: lambda.Runtime.PROVIDED_AL2,
+        handler: "bootstrap",
+        code: lambda.Code.fromAsset(path.join(__dirname, '..', 'build', crawler.funcName)),
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
@@ -195,9 +186,9 @@ export class RetrospectorStack extends cdk.Stack {
 
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
-        runtime: lambda.Runtime.GO_1_X,
-        handler: handler.funcName,
-        code: asset,
+        runtime: lambda.Runtime.PROVIDED_AL2,
+        handler: "bootstrap",
+        code: lambda.Code.fromAsset(path.join(__dirname, '..', 'build', handler.funcName)),
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
