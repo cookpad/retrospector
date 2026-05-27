@@ -115,9 +115,10 @@ export class RetrospectorStack extends cdk.Stack {
     }) : undefined;
 
     const rootPath = path.resolve(__dirname, '..');
+    const providedAl2023 = new lambda.Runtime('provided.al2023');
     const asset = lambda.Code.fromAsset(rootPath, {
       bundling: {
-        image: lambda.Runtime.GO_1_X.bundlingDockerImage,
+        image: cdk.DockerImage.fromRegistry('golang:1.21-bullseye'),
         user: 'root',
         command: ['make', 'asset'],
       },
@@ -149,7 +150,7 @@ export class RetrospectorStack extends cdk.Stack {
 
     crawlers.forEach(crawler => {
       const func = new lambda.Function(this, crawler.funcName, {
-        runtime: lambda.Runtime.GO_1_X,
+        runtime: providedAl2023,
         handler: crawler.funcName,
         code: asset,
         role: lambdaRole,
@@ -195,7 +196,7 @@ export class RetrospectorStack extends cdk.Stack {
 
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
-        runtime: lambda.Runtime.GO_1_X,
+        runtime: providedAl2023,
         handler: handler.funcName,
         code: asset,
         role: lambdaRole,

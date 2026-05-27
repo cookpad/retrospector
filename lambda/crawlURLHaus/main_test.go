@@ -9,13 +9,13 @@ import (
 	"testing"
 
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
-	"github.com/m-mizutani/retrospector/pkg/mock"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/m-mizutani/retrospector/lambda/crawlURLHaus"
+	main "github.com/cookpad/retrospector/lambda/crawlURLHaus"
 )
 
 func TestCrawlURLHausIntegration(t *testing.T) {

@@ -30,6 +30,8 @@ build: $(FUNCTIONS)
 
 asset: build
 	cp $(CODE_DIR)/build/* /asset-output
+	printf '#!/bin/sh\nexec "$${_HANDLER}"' > /asset-output/bootstrap
+	chmod +x /asset-output/bootstrap
 
 clean:
 	rm -f $(FUNCTIONS)

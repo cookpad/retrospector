@@ -1,7 +1,7 @@
 package logging_test
 
 import (
-	"github.com/m-mizutani/retrospector/pkg/logging"
+	"github.com/cookpad/retrospector/pkg/logging"
 )
 
 func ExampleLogger() {

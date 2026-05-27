@@ -5,8 +5,8 @@ import (
 
 	"github.com/Netflix/go-env"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/service"
+	"github.com/cookpad/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector/pkg/service"
 )
 
 // Arguments are passed to Handler. It includes environment variables, received event and factories, etc.

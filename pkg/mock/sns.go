@@ -2,7 +2,7 @@ package mock
 
 import (
 	"github.com/aws/aws-sdk-go/service/sns"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector/pkg/adaptor"
 )
 
 // SNSClient is mock SNS client

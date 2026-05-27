@@ -8,7 +8,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector/pkg/adaptor"
 )
 
 var s3Objects map[string]map[string][]byte

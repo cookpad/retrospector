@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/logging"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector/pkg/logging"
 )
 
 var logger = logging.Logger

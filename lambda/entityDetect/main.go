@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
-	"github.com/m-mizutani/retrospector/pkg/service"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector/pkg/service"
 )
 
 // Handler is exporeted for test

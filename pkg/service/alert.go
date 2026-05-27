@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/adaptor"
 	"github.com/slack-go/slack"
 )
 

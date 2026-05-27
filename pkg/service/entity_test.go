@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/adaptor"
-	"github.com/m-mizutani/retrospector/pkg/mock"
-	"github.com/m-mizutani/retrospector/pkg/service"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/adaptor"
+	"github.com/cookpad/retrospector/pkg/mock"
+	"github.com/cookpad/retrospector/pkg/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

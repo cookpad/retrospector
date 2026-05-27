@@ -9,13 +9,13 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
-	"github.com/m-mizutani/retrospector/pkg/mock"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector/pkg/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/m-mizutani/retrospector/lambda/iocDetect"
+	main "github.com/cookpad/retrospector/lambda/iocDetect"
 )
 
 func TestIOCDetect(t *testing.T) {

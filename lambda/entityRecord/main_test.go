@@ -6,13 +6,13 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
-	"github.com/m-mizutani/retrospector/pkg/mock"
-	"github.com/m-mizutani/retrospector/pkg/service"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector/pkg/mock"
+	"github.com/cookpad/retrospector/pkg/service"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/m-mizutani/retrospector/lambda/entityRecord"
+	main "github.com/cookpad/retrospector/lambda/entityRecord"
 )
 
 func TestEntityRecord(t *testing.T) {

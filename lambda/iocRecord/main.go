@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
 )
 
 //Handler is exporeted for test

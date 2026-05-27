@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
-	"github.com/m-mizutani/retrospector"
+	"github.com/cookpad/retrospector"
 
 	"github.com/m-mizutani/golambda"
 )

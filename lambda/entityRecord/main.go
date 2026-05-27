@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/m-mizutani/golambda"
-	"github.com/m-mizutani/retrospector"
-	"github.com/m-mizutani/retrospector/pkg/arguments"
-	"github.com/m-mizutani/retrospector/pkg/logging"
+	"github.com/cookpad/retrospector"
+	"github.com/cookpad/retrospector/pkg/arguments"
+	"github.com/cookpad/retrospector/pkg/logging"
 )
 
 var logger = logging.Logger
