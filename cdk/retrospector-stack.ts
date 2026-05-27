@@ -115,7 +115,6 @@ export class RetrospectorStack extends cdk.Stack {
     }) : undefined;
 
     const providedAl2023 = new lambda.Runtime('provided.al2023');
-    const asset = lambda.Code.fromAsset(path.join(__dirname, '..', 'build'));
 
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
@@ -144,8 +143,8 @@ export class RetrospectorStack extends cdk.Stack {
     crawlers.forEach(crawler => {
       const func = new lambda.Function(this, crawler.funcName, {
         runtime: providedAl2023,
-        handler: crawler.funcName,
-        code: asset,
+        handler: 'bootstrap',
+        code: lambda.Code.fromAsset(path.join(__dirname, '..', 'build', crawler.funcName)),
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,
@@ -190,8 +189,8 @@ export class RetrospectorStack extends cdk.Stack {
     handlers.forEach(handler => {
       const func = new lambda.Function(this, handler.funcName, {
         runtime: providedAl2023,
-        handler: handler.funcName,
-        code: asset,
+        handler: 'bootstrap',
+        code: lambda.Code.fromAsset(path.join(__dirname, '..', 'build', handler.funcName)),
         role: lambdaRole,
         timeout: cdk.Duration.seconds(300),
         memorySize: 1024,

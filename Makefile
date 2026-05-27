@@ -1,39 +1,17 @@
 CODE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 CWD := ${CURDIR}
 
-FUNCTIONS = \
-	$(CODE_DIR)/build/iocRecord \
-	$(CODE_DIR)/build/iocDetect \
-	$(CODE_DIR)/build/entityRecord \
-	$(CODE_DIR)/build/entityDetect \
-	$(CODE_DIR)/build/crawlOTX \
-	$(CODE_DIR)/build/crawlURLHaus
+FUNC_NAMES = iocRecord iocDetect entityRecord entityDetect crawlOTX crawlURLHaus
+FUNCTIONS = $(foreach f,$(FUNC_NAMES),$(CODE_DIR)/build/$(f)/bootstrap)
 
 SRC=$(CODE_DIR)/*.go $(CODE_DIR)/pkg/*/*.go
 
 all: build
 
-$(CODE_DIR)/build/iocRecord: $(SRC) $(CODE_DIR)/lambda/iocRecord/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/iocRecord $(CODE_DIR)/lambda/iocRecord/
-$(CODE_DIR)/build/iocDetect: $(SRC) $(CODE_DIR)/lambda/iocDetect/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/iocDetect $(CODE_DIR)/lambda/iocDetect/
-$(CODE_DIR)/build/entityRecord: $(SRC) $(CODE_DIR)/lambda/entityRecord/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/entityRecord $(CODE_DIR)/lambda/entityRecord/
-$(CODE_DIR)/build/entityDetect: $(SRC) $(CODE_DIR)/lambda/entityDetect/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/entityDetect $(CODE_DIR)/lambda/entityDetect/
-$(CODE_DIR)/build/crawlURLHaus: $(SRC) $(CODE_DIR)/lambda/crawlURLHaus/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/crawlURLHaus $(CODE_DIR)/lambda/crawlURLHaus/
-$(CODE_DIR)/build/crawlOTX: $(SRC) $(CODE_DIR)/lambda/crawlOTX/*.go
-	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/crawlOTX $(CODE_DIR)/lambda/crawlOTX/
+$(CODE_DIR)/build/%/bootstrap: $(SRC) $(CODE_DIR)/lambda/%/*.go
+	env GOARCH=amd64 GOOS=linux go build -o $@ $(CODE_DIR)/lambda/$*/
 
 build: $(FUNCTIONS)
-	printf '#!/bin/sh\nexec ./"$${_HANDLER}"' > $(CODE_DIR)/build/bootstrap
-	chmod +x $(CODE_DIR)/build/bootstrap
-
-asset: build
-	cp $(CODE_DIR)/build/* /asset-output
-	printf '#!/bin/sh\nexec "$${_HANDLER}"' > /asset-output/bootstrap
-	chmod +x /asset-output/bootstrap
 
 clean:
-	rm -f $(FUNCTIONS)
+	rm -rf $(CODE_DIR)/build
