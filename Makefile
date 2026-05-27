@@ -27,6 +27,8 @@ $(CODE_DIR)/build/crawlOTX: $(SRC) $(CODE_DIR)/lambda/crawlOTX/*.go
 	env GOARCH=amd64 GOOS=linux go build -o $(CODE_DIR)/build/crawlOTX $(CODE_DIR)/lambda/crawlOTX/
 
 build: $(FUNCTIONS)
+	printf '#!/bin/sh\nexec ./"$${_HANDLER}"' > $(CODE_DIR)/build/bootstrap
+	chmod +x $(CODE_DIR)/build/bootstrap
 
 asset: build
 	cp $(CODE_DIR)/build/* /asset-output

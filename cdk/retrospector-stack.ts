@@ -114,15 +114,8 @@ export class RetrospectorStack extends cdk.Stack {
       mutable: false,
     }) : undefined;
 
-    const rootPath = path.resolve(__dirname, '..');
     const providedAl2023 = new lambda.Runtime('provided.al2023');
-    const asset = lambda.Code.fromAsset(rootPath, {
-      bundling: {
-        image: cdk.BundlingDockerImage.fromRegistry('golang:1.21-bullseye'),
-        user: 'root',
-        command: ['make', 'asset'],
-      },
-    });
+    const asset = lambda.Code.fromAsset(path.join(__dirname, '..', 'build'));
 
     const baseEnvVars = {
       IOC_TOPIC_ARN: this.iocTopic.topicArn,
