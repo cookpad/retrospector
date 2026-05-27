@@ -118,7 +118,7 @@ export class RetrospectorStack extends cdk.Stack {
     const providedAl2023 = new lambda.Runtime('provided.al2023');
     const asset = lambda.Code.fromAsset(rootPath, {
       bundling: {
-        image: cdk.DockerImage.fromRegistry('golang:1.21-bullseye'),
+        image: cdk.BundlingDockerImage.fromRegistry('golang:1.21-bullseye'),
         user: 'root',
         command: ['make', 'asset'],
       },
