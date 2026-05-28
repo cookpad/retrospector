@@ -1,6 +1,6 @@
 module github.com/cookpad/retrospector
 
-go 1.21
+go 1.26.3
 
 require (
 	github.com/Netflix/go-env v0.0.0-20201103003909-014a952cefe2
@@ -23,6 +23,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
+	golang.org/x/net v0.55.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
